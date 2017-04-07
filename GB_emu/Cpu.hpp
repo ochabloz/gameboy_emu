@@ -57,7 +57,6 @@ class Cpu {
     uint8_t IME_delay;
     
     Memory_map *mem;
-    inline uint8_t read_PC_mem(); // read from PC++
     inline uint8_t read_mem(uint16_t addr);
     inline void write_mem(uint16_t addr, uint8_t data);
     uint8_t get_nn_pointer();

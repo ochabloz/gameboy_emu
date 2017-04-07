@@ -12,6 +12,7 @@
 #include <stdint.h>
 #include "Cart.hpp"
 #include "PPU.hpp"
+#include "APU.hpp"
 #include <vector>
 
 class Memory_map{
@@ -21,21 +22,20 @@ class Memory_map{
     uint16_t DMA_dst;
     Cart * cart;
     PPU * ppu;
+    APU * apu;
     uint8_t joypad_reg;
     
     int serial_cycles_until_shift;
     int serial_data;
     uint8_t serial_recieved;
-    int serial_status;
     uint8_t serial_clock;
 
     
 public:
     uint8_t d_pad;
     uint8_t btns;
-    uint8_t io_ctrls[0x100];
     uint8_t sync_cycle(uint8_t cycle);
-    Memory_map(Cart *cart, PPU * ppu);
+    Memory_map(Cart *cart, PPU * ppu, APU * apu);
     uint8_t read(uint16_t addr);
     void write(uint16_t addr, uint8_t data);
 };

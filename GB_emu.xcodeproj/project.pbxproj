@@ -13,6 +13,7 @@
 		0985873B1E686A910028288F /* Cpu.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 098587391E686A910028288F /* Cpu.cpp */; };
 		09A28B291E76F176004DD4C2 /* SDL2.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 09A28B281E76F176004DD4C2 /* SDL2.framework */; };
 		09AA7C831E853F2000AB2BB1 /* PPU.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 09AA7C811E853F2000AB2BB1 /* PPU.cpp */; };
+		09AA7C861E967CDC00AB2BB1 /* APU.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 09AA7C841E967CDC00AB2BB1 /* APU.cpp */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXCopyFilesBuildPhase section */
@@ -39,6 +40,8 @@
 		09A28B281E76F176004DD4C2 /* SDL2.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = SDL2.framework; path = ../../../../../Library/Frameworks/SDL2.framework; sourceTree = "<group>"; };
 		09AA7C811E853F2000AB2BB1 /* PPU.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = PPU.cpp; sourceTree = "<group>"; };
 		09AA7C821E853F2000AB2BB1 /* PPU.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; path = PPU.hpp; sourceTree = "<group>"; };
+		09AA7C841E967CDC00AB2BB1 /* APU.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = APU.cpp; sourceTree = "<group>"; };
+		09AA7C851E967CDC00AB2BB1 /* APU.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; path = APU.hpp; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -82,6 +85,8 @@
 				098587371E65592B0028288F /* Memory_map.hpp */,
 				098587391E686A910028288F /* Cpu.cpp */,
 				0985873A1E686A910028288F /* Cpu.hpp */,
+				09AA7C841E967CDC00AB2BB1 /* APU.cpp */,
+				09AA7C851E967CDC00AB2BB1 /* APU.hpp */,
 			);
 			path = GB_emu;
 			sourceTree = "<group>";
@@ -151,6 +156,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				09AA7C861E967CDC00AB2BB1 /* APU.cpp in Sources */,
 				09AA7C831E853F2000AB2BB1 /* PPU.cpp in Sources */,
 				0985873B1E686A910028288F /* Cpu.cpp in Sources */,
 				098587301E6555E10028288F /* main.cpp in Sources */,

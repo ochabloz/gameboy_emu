@@ -7,12 +7,13 @@
 //
 
 #include "Cart.hpp"
-
+#include <string>
 
 Cart::Cart(char * file_path){
     std::ifstream file(file_path, std::ios::binary);
     rom = std::vector<char>(std::istreambuf_iterator<char>(file),
                                std::istreambuf_iterator<char>());
+    file.close();
     
     cart_ram_enable = false;
     
@@ -41,12 +42,39 @@ Cart::Cart(char * file_path){
         case 0x01: ram_size = 1; break;
         case 0x02: ram_size = 2; break;
         case 0x03: ram_size = 4; break;
+        case 0x04: ram_size = 16; break;
         default:   ram_size = 0; break;
+    }
+    if (ram_size > 0) {
+        std::string sav_name = "/Users/Olivier/Dropbox/Coding/gameboy/emu/" +std::string(TITLE) + ".sav";
+        std::ifstream sav_file (sav_name, std::ios::binary);
+        std::vector<char> ram_tmp = std::vector<char>(std::istreambuf_iterator<char>(sav_file),
+                          std::istreambuf_iterator<char>());
+        
+        if (ram_tmp.size() == (ram_size * 0x2000)) {
+            // size is ok.
+            ram = ram_tmp;
+        }
+        else{
+            // size not ok. reseting...
+            ram = std::vector<char>(ram_size * 0x2000, 0);
+        }
+        
     }
     
     ram_bank  = 0;
     rom_bank1 = 1;
     rom_ram_mode = ROM_MODE;
+}
+
+Cart::~Cart(){
+    if (ram_size > 0) {
+        std::string sav_name = "/Users/Olivier/Dropbox/Coding/gameboy/emu/" +std::string(TITLE) + ".sav";
+        std::ofstream sav_file (sav_name, std::ios::binary);
+        sav_file.write(reinterpret_cast<char*>(&ram[0]), ram.size());
+        sav_file.close();
+    }
+    
 }
 
 uint8_t Cart::read(uint16_t addr){
@@ -57,7 +85,8 @@ uint8_t Cart::read(uint16_t addr){
         return rom[(rom_bank1 * 0x4000) + (addr - 0x4000)];
     }
     else if (addr < 0xC000){
-        return cart_ram[(ram_bank * 0x2000) + (addr - 0xA000)];
+        uint32_t ram_addr = (ram_bank * 0x2000) + (addr - 0xA000);
+        return ram[ram_addr];
     }
     return 0x00;
 }
@@ -71,7 +100,7 @@ void Cart::mbc1_write(uint16_t addr, uint8_t data){
         rom_bank1 = ((data & 0x1F) == 0) ? 0x1 : (rom_bank1 & ~(0x1F)) | (data & 0x1F);
         if (rom_bank1 > (rom_size - 1)) {
             rom_bank1 = rom_size - 1;
-            printf("Warning! rom bank 1 is greater than size !");
+            printf("Warning! rom bank 1 is greater than size !\n");
         }
     }
     else if(addr >= 0x4000 && addr < 0x6000){
@@ -82,7 +111,7 @@ void Cart::mbc1_write(uint16_t addr, uint8_t data){
                 rom_bank1 |= (data & 0x3) << 5;
                 if (rom_bank1 > (rom_size - 1)) {
                     rom_bank1 = rom_size - 1;
-                    printf("Warning! rom bank 1 is greater than size !");
+                    printf("Warning! rom bank 1 is greater than size !\n");
                 }
                 printf("HI bank number changed : [%4X] = %X\n", addr, rom_bank1);
                 break;
@@ -108,8 +137,8 @@ void Cart::mbc1_write(uint16_t addr, uint8_t data){
             rom_ram_mode = ROM_MODE;
         }
     }
-    else if(addr >= 0xA000 && addr < 0xC000){
-        cart_ram[addr - 0xA000] = data;
+    else if(addr >= 0xA000 && addr < 0xC000 && ram_size > 0){
+        ram[addr - 0xA000] = data;
     }
     else{
         printf("Unknown cart write : [%4X] = %X\n", addr, data);
@@ -135,7 +164,7 @@ void Cart::mbc5_write(uint16_t addr, uint8_t data){
         ram_bank = data;
     }
     else if(addr >= 0xA000 && addr < 0xC000){
-        cart_ram[addr - 0xA000] = data;
+        ram[(ram_bank * 0x2000) + (addr - 0xA000)] = data;
     }
     else{
         printf("Unknown cart write : [%4X] = %X\n", addr, data);

@@ -9,9 +9,10 @@
 #include "Memory_map.hpp"
 #include <string.h>
 
-Memory_map::Memory_map(Cart *cart, PPU * ppu){
+Memory_map::Memory_map(Cart *cart, PPU * ppu, APU * apu){
     this->cart = cart;
     this->ppu = ppu;
+    this->apu = apu;
     d_pad = 0x0F;
     btns  = 0x0F;
     joypad_reg = 0x00;
@@ -25,22 +26,17 @@ uint8_t Memory_map::sync_cycle(uint8_t cycle){
     if(DMA_src != 0){
         for (int i = 0; i < (cycle / 4); i++) {
             write(DMA_dst, read(DMA_src));
-            DMA_dst = (DMA_dst < 0xFE9F) ? DMA_dst+1 : 0;
+            DMA_dst = (DMA_dst < 0xFE9F) ? DMA_dst + 1 : 0;
             DMA_src = ((DMA_src & 0xFF) < 0x9F) ? DMA_src+1 : 0;
         }
     }
-    if (serial_status > 0) {
+    if (serial_cycles_until_shift > 0) {
         serial_cycles_until_shift -= cycle;
-        if (serial_cycles_until_shift < 0) {
-            serial_status--;
-            if (serial_status == 0) {
-                ret = 0x08;
-                serial_status = 0;
-                serial_recieved = 0xFF;
-            }
-            else{
-                serial_cycles_until_shift += 512;
-            }
+        if (serial_cycles_until_shift <= 0) {
+            ret |= 0x08;
+            serial_recieved = 0xFF;
+            serial_cycles_until_shift = 0;
+            serial_clock &= 0x7F;
         }
     }
     return ppu->run((uint32_t)cycle) | ret;
@@ -84,11 +80,12 @@ uint8_t Memory_map::read(uint16_t addr){
             return serial_recieved;
         }
         else if (addr == 0xFF02){
-            return serial_clock;
+            return serial_clock | 0x7E;
         }
         switch (addr & 0xFFF0) {
+            case 0xFF10:
+            case 0xFF20: return apu->read(addr);
             case 0xFF40: return ppu->read(addr);
-            default:     return io_ctrls[addr - 0xFF00];
         }
     }
     else if(addr >= 0xFF80 && addr <= 0xFFFE){ // IO controls address space
@@ -131,9 +128,9 @@ void Memory_map::write(uint16_t addr, uint8_t data){
         }
         else if (addr == 0xFF02){
             serial_clock = data;
-            if (serial_clock & 0x80) {
-                serial_status = 8;
-                serial_cycles_until_shift = 512;
+            if ((serial_clock & 0x81) == 0x81) {
+                // Bit 0 = 1 Internal clock. Data is sent
+                serial_cycles_until_shift = 4096;
             }
         }
         else if (addr == 0xFF46){
@@ -143,16 +140,14 @@ void Memory_map::write(uint16_t addr, uint8_t data){
         }
         else {
             switch (addr & 0xFFF0){
+                case 0xFF10:
+                case 0xFF20: apu->write(addr, data); break;
                 case 0xFF40: ppu->write(addr, data); break;
-                default:     io_ctrls[addr - 0xFF00] = data; break;
             }
         }
     }
     else if(addr >= 0xFF80 && addr <= 0xFFFE){ // IO controls address space
         hram[addr - 0xFF80] = data;
-    }
-    else if (addr == 0xFFFF){
-        io_ctrls[0xFF] = data;
     }
     else{
         printf("oops");

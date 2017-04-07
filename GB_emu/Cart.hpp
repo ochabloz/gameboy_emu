@@ -33,6 +33,7 @@ class Cart {
     int rom_bank1;
     int ram_bank;
     std::vector<char> rom;
+    std::vector<char> ram;
     
     char TITLE[0x10];
     uint32_t rom_size;
@@ -42,13 +43,14 @@ class Cart {
     
     bool cart_ram_enable;
     uint8_t rom_ram_mode;
-    uint8_t cart_ram[0x8000];
+    //uint8_t cart_ram[0x8000];
     
     void mbc1_write(uint16_t addr, uint8_t data);
     void mbc5_write(uint16_t addr, uint8_t data);
     
 public:
     Cart(char * file_path);
+    ~Cart();
     uint8_t read(uint16_t addr);
     void write(uint16_t addr, uint8_t data);
     

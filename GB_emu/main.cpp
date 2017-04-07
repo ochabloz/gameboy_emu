@@ -14,6 +14,7 @@
 #include "Memory_map.hpp"
 #include "Cpu.hpp"
 #include "PPU.hpp"
+#include "APU.hpp"
 #include <SDL2/SDL.h>
 
 //Screen dimension constants
@@ -22,10 +23,10 @@ const int SCREEN_HEIGHT = 144 * 4;
 
 
 int main(int argc, const char * argv[]) {
-    Cart cart("/Users/Olivier/Dropbox/Coding/gameboy/emu/mario2.gb");
+    
+    Cart cart("/Users/Olivier/Dropbox/Coding/gameboy/emu/mem_timing.gb");
     //The window we'll be rendering to
     SDL_Window* window = NULL;
-    
     //The surface contained by the window
     SDL_Surface* screenSurface = NULL;
     
@@ -42,14 +43,14 @@ int main(int argc, const char * argv[]) {
     //Get window surface
     screenSurface = SDL_GetWindowSurface(window);
     
-    
     uint32_t time = SDL_GetTicks();
-    
+    bool quit = false;
     PPU ppu;
-    Memory_map memory(&cart, &ppu);
+    APU apu;
+    Memory_map memory(&cart, &ppu, &apu);
     Cpu processor(&memory);
     uint64_t cycles = 0;
-    while(1){
+    while(!quit){
         time = SDL_GetTicks();
         while (!ppu.screen_complete) {
             cycles += processor.run();
@@ -83,6 +84,9 @@ int main(int argc, const char * argv[]) {
                     }
                     else if(evt.key.keysym.sym == SDLK_BACKSPACE){
                         memory.btns |= 0x01 << 0x2;
+                    }
+                    else if (evt.key.keysym.sym == SDLK_ESCAPE){
+                        quit = true;
                     }
                     break;
                 }

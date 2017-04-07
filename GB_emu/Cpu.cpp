@@ -13,9 +13,12 @@ using namespace std;
 
 //#define TRACE
 
+
 #define writeHL(data) write_mem(REG(H, L), data)
 #define readHL() read_mem(REG(H, L))
 #define pushPC() push((uint8_t)(PC >> 8)); push((uint8_t)(PC & 0xFF))
+
+#define read_PC_mem() read_mem(PC++)
 
 // misc instruction implemented by macros
 #define check_bit(x, reg) do{SF_Z(((reg) & (0x1 << (x))) == 0); SF_H(1); SF_N(0);}while(0)
@@ -38,13 +41,10 @@ Cpu::~Cpu(){
 
 void Cpu::write_HL_pointer(uint8_t data){
     uint16_t pointer = (H << 8) | L;
-    cycle += 4;
-    mem->write(pointer, data);
+    write_mem(pointer, data);
 }
 
-inline uint8_t Cpu::read_PC_mem(){
-    return read_mem(PC++);
-}
+
 
 inline uint8_t Cpu::read_mem(uint16_t addr){
     cycle += 4;
