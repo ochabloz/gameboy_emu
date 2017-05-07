@@ -49,7 +49,7 @@ class Cart {
     void mbc5_write(uint16_t addr, uint8_t data);
     
 public:
-    Cart(char * file_path);
+    Cart(const char * file_path);
     ~Cart();
     uint8_t read(uint16_t addr);
     void write(uint16_t addr, uint8_t data);

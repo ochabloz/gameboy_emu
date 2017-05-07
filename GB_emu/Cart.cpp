@@ -9,7 +9,7 @@
 #include "Cart.hpp"
 #include <string>
 
-Cart::Cart(char * file_path){
+Cart::Cart(const char * file_path){
     std::ifstream file(file_path, std::ios::binary);
     rom = std::vector<char>(std::istreambuf_iterator<char>(file),
                                std::istreambuf_iterator<char>());

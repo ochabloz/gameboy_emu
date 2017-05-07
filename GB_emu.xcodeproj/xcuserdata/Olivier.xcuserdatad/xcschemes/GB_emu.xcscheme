@@ -61,6 +61,12 @@
             ReferencedContainer = "container:GB_emu.xcodeproj">
          </BuildableReference>
       </BuildableProductRunnable>
+      <CommandLineArguments>
+         <CommandLineArgument
+            argument = "/Users/Olivier/Dropbox/Coding/gameboy/emu/picross.gb"
+            isEnabled = "YES">
+         </CommandLineArgument>
+      </CommandLineArguments>
       <AdditionalOptions>
       </AdditionalOptions>
    </LaunchAction>

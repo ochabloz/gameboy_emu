@@ -23,8 +23,11 @@ const int SCREEN_HEIGHT = 144 * 4;
 
 
 int main(int argc, const char * argv[]) {
-    
-    Cart cart("/Users/Olivier/Dropbox/Coding/gameboy/emu/mem_timing.gb");
+    if (argc <= 1) {
+        printf("Usage : gb_emu romfile.gb");
+        return 0;
+    }
+    Cart cart(argv[1]);
     //The window we'll be rendering to
     SDL_Window* window = NULL;
     //The surface contained by the window
