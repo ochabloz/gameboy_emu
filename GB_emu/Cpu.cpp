@@ -24,9 +24,11 @@ using namespace std;
 #define check_bit(x, reg) do{SF_Z(((reg) & (0x1 << (x))) == 0); SF_H(1); SF_N(0);}while(0)
 
 Cpu::Cpu(Memory_map *m):
-PC(0x100), SP(0xfffe), A(0x11), B(0x00), C(0x13), D(0x00), E(0xd8), H(0x01), L(0x4d), F(0xB0),
+PC(0x100), SP(0xfffe), A(0x11), B(0x00), C(0x13), D(0x00), E(0xd8), H(0x01), L(0x4d),
 IME(0), timer_DIV(0xABCC), halted(false), timer_TMA(0x00), timer_TIMA(0x00), timer_TCRL(0xF8),
 IE(0x00), IF(0x01){
+    writeF(0xB0);
+    
     mem = m;
 #ifdef TRACE
     myfile.open ("/Users/Olivier/Dropbox/Coding/gameboy/emu/gb_emu.log", ios::out);
@@ -37,6 +39,21 @@ Cpu::~Cpu(){
 #ifdef TRACE
     myfile.close();
 #endif
+}
+
+inline void Cpu::writeF(uint8_t val){
+    flag_c = (val & 0x10) > 0;
+    flag_h = (val & 0x20) > 0;
+    flag_n = (val & 0x40) > 0;
+    flag_z = (val & 0x80) > 0;
+}
+
+inline uint8_t Cpu::readF(){
+    uint8_t ret = (flag_c) ? 0x10 : 0x00;
+    ret |= (flag_h) ? 0x20 : 0x00;
+    ret |= (flag_n) ? 0x40 : 0x00;
+    ret |= (flag_z) ? 0x80 : 0x00;
+    return ret;
 }
 
 void Cpu::write_HL_pointer(uint8_t data){
@@ -186,7 +203,7 @@ uint8_t Cpu::run(){
         case 0x32: ldd_hla_Handler(); break;
         case 0x3A: ldd_ahl_Handler(); break;
             
-        case 0x3F: F ^= 0x10; SF_N(0); SF_H(0); break;
+        case 0x3F: flag_c ^= true; SF_N(0); SF_H(0); break;
             
         case 0x06: ld_n_Handler(&B, read_PC_mem()); break;
         case 0x0E: ld_n_Handler(&C, read_PC_mem()); break;
@@ -308,7 +325,7 @@ uint8_t Cpu::run(){
         case 0x02: write_mem(REG(B,C), A); break;
         case 0x12: write_mem(REG(D,E), A); break;
         
-        case 0xEA: write_mem(read_PC_mem() | read_PC_mem() << 8, A); break;
+        case 0xEA: write_mem(read_PC_mem() | (read_PC_mem() << 8), A); break;
             
         case 0xE0: write_mem(0xFF00 + read_PC_mem(), A); break;
         case 0xE2: write_mem(0xFF00 + C, A); break;
@@ -443,12 +460,12 @@ uint8_t Cpu::run(){
         case 0xfB: IME_delay = 1; break;
         case 0xD9: IME = 1; ret_handler(); break;
         
-        case 0xF5: push_instruction(A, F); break;
+        case 0xF5: push_instruction(A, readF()); break;
         case 0xC5: push_instruction(B, C); break;
         case 0xD5: push_instruction(D, E); break;
         case 0xE5: push_instruction(H, L); break;
             
-        case 0xF1: pop(&A, &F); F &= 0xF0; break;
+        case 0xF1: {uint8_t tmpF; pop(&A, &tmpF); writeF(tmpF); break;}
         case 0xC1: pop(&B, &C); break;
         case 0xD1: pop(&D, &E); break;
         case 0xE1: pop(&H, &L); break;
@@ -1049,9 +1066,10 @@ inline void Cpu::SRA_handler(uint8_t * reg){
 }
 
 inline void Cpu::SRL_handler(uint8_t *reg){
-    uint8_t flags = (*reg & 0x01) << 4;
+    SF_C(*reg & 0x1);
+    SF_H(0); SF_N(0);
     *reg >>= 1;
-    F = (*reg == 0) ? flags | 0x80 : flags;
+    SF_Z(*reg==0);
 }
 
 inline void Cpu::RLC_Handler(uint8_t * reg){

@@ -17,15 +17,15 @@
 #define INT_SERIAL 0x08
 #define INT_JOYPAD 0x10
 
-#define SF_Z(x) (F = (F & 0x7F) | (x) << 7)
-#define SF_N(x) (F = (F & 0xBF) | (x) << 6)
-#define SF_H(x) (F = (F & 0xDF) | (x) << 5)
-#define SF_C(x) (F = (F & 0xEF) | (x) << 4)
+#define SF_Z(x) (flag_z = x)
+#define SF_N(x) (flag_n = x)
+#define SF_H(x) (flag_h = x)
+#define SF_C(x) (flag_c = x)
 
-#define RF_Z() ((F >> 7) & 0x1)
-#define RF_N() ((F >> 6) & 0x1)
-#define RF_H() ((F >> 5) & 0x1)
-#define RF_C() ((F >> 4) & 0x1)
+#define RF_Z() (flag_z)
+#define RF_N()  (flag_n)
+#define RF_H()  (flag_h)
+#define RF_C()  (flag_c)
 
 #define FLAGS(Z,N,H,C) SF_Z(Z); SF_N(N); SF_H(H); SF_C(C)
 
@@ -42,7 +42,11 @@ class Cpu {
     uint8_t H;
     uint8_t L;
     
-    uint8_t F;
+    //uint8_t F;
+    bool flag_c;
+    bool flag_h;
+    bool flag_n;
+    bool flag_z;
     
     uint16_t timer_DIV;
     uint32_t timer_TIMA;
@@ -57,6 +61,8 @@ class Cpu {
     uint8_t IME_delay;
     
     Memory_map *mem;
+    inline uint8_t readF();
+    inline void writeF(uint8_t val);
     inline uint8_t read_mem(uint16_t addr);
     inline void write_mem(uint16_t addr, uint8_t data);
     uint8_t get_nn_pointer();
