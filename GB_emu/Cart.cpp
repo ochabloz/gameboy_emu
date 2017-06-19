@@ -46,7 +46,8 @@ Cart::Cart(const char * file_path){
         default:   ram_size = 0; break;
     }
     if (ram_size > 0) {
-        std::string sav_name = "/Users/Olivier/Dropbox/Coding/gameboy/emu/" +std::string(TITLE) + ".sav";
+        file_path_rom = std::string(file_path);
+        std::string sav_name = file_path_rom + ".sav";
         std::ifstream sav_file (sav_name, std::ios::binary);
         std::vector<char> ram_tmp = std::vector<char>(std::istreambuf_iterator<char>(sav_file),
                           std::istreambuf_iterator<char>());
@@ -69,7 +70,7 @@ Cart::Cart(const char * file_path){
 
 Cart::~Cart(){
     if (ram_size > 0) {
-        std::string sav_name = "/Users/Olivier/Dropbox/Coding/gameboy/emu/" +std::string(TITLE) + ".sav";
+        std::string sav_name = file_path_rom + ".sav";
         std::ofstream sav_file (sav_name, std::ios::binary);
         sav_file.write(reinterpret_cast<char*>(&ram[0]), ram.size());
         sav_file.close();
