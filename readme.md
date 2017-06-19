@@ -6,13 +6,13 @@ Its purpose is solely educational
 
 ### Emulation status
 
-- CPU is functional but not cycle accurate (but very very close)
+- CPU is functional but not cycle accurate
 - PPU is functional but not cycle accurate
 - APU is not implemented yet.
-- Serial is not implemented yet
+- Serial is emulated
 
 ### Requirements
-- SDL_2
+- SDL2
 
 ### Disclamer 
 Since better emulators exists you are not advised to use this one in its current form.
