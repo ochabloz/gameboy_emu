@@ -25,7 +25,7 @@ const int SCREEN_HEIGHT = 144 * 4;
 int main(int argc, const char * argv[]) {
     if (argc <= 1) {
         printf("Usage : gb_emu romfile.gb");
-        return 0;
+        return EXIT_SUCCESS;
     }
     Cart cart(argv[1]);
     //The window we'll be rendering to
@@ -35,7 +35,7 @@ int main(int argc, const char * argv[]) {
     
     //Initialize SDL
     if( SDL_Init(SDL_INIT_VIDEO | SDL_INIT_TIMER)< 0 ){
-        return 1;
+        return EXIT_FAILURE;
     }
     char title[16];
     cart.get_title(title);
@@ -62,70 +62,33 @@ int main(int argc, const char * argv[]) {
         while (SDL_PollEvent(&evt)) {
             switch (evt.type) {
                 case SDL_KEYUP:
-                {
-                    if(evt.key.keysym.sym == SDLK_LEFT){
-                        memory.d_pad |= 0x01 << 0x1;
-                    }
-                    else if(evt.key.keysym.sym == SDLK_RIGHT){
-                        memory.d_pad |= 0x01 << 0x0;
-                    }
-                    else if(evt.key.keysym.sym == SDLK_UP){
-                        memory.d_pad |= 0x01 << 0x2;
-                    }
-                    else if(evt.key.keysym.sym == SDLK_DOWN){
-                        memory.d_pad |= 0x01 << 0x3;
-                    }
-                    
-                    else if(evt.key.keysym.sym == SDLK_s){
-                        memory.btns |= 0x01 << 0x0;
-                    }
-                    else if(evt.key.keysym.sym == SDLK_a){
-                        memory.btns |= 0x01 << 0x1;
-                    }
-                    else if(evt.key.keysym.sym == SDLK_RETURN){
-                        memory.btns |= 0x01 << 0x3;
-                    }
-                    else if(evt.key.keysym.sym == SDLK_BACKSPACE){
-                        memory.btns |= 0x01 << 0x2;
-                    }
-                    else if (evt.key.keysym.sym == SDLK_ESCAPE){
-                        quit = true;
-                    }
-                    break;
-                }
                 case SDL_KEYDOWN:
                 {
-                    if(evt.key.keysym.sym == SDLK_LEFT){
-                        memory.d_pad &= ~(0x01 << 0x1);
+                    uint8_t bit_pos = 0x00;
+                    switch(evt.key.keysym.sym){
+                        case SDLK_RIGHT:    bit_pos = 0x01 << 0x00; break;
+                        case SDLK_LEFT:     bit_pos = 0x01 << 0x01; break;
+                        case SDLK_UP:       bit_pos = 0x01 << 0x02; break;
+                        case SDLK_DOWN:     bit_pos = 0x01 << 0x03; break;
+
+                        case SDLK_s:        bit_pos = 0x10 << 0x00; break;
+                        case SDLK_a:        bit_pos = 0x10 << 0x01; break;
+                        case SDLK_BACKSPACE:bit_pos = 0x10 << 0x02; break;
+                        case SDLK_RETURN:   bit_pos = 0x10 << 0x03; break;
+
+                        case SDLK_ESCAPE:   quit = true;
+                        default:            bit_pos = 0x00; break;
                     }
-                    else if(evt.key.keysym.sym == SDLK_RIGHT){
-                        memory.d_pad &= ~(0x01 << 0x0);
-                    }
-                    else if(evt.key.keysym.sym == SDLK_UP){
-                        memory.d_pad &= ~(0x01 << 0x2);
-                    }
-                    else if(evt.key.keysym.sym == SDLK_DOWN){
-                        memory.d_pad &= ~(0x01 << 0x3);
-                    }
-                    
-                    else if(evt.key.keysym.sym == SDLK_s){
-                        memory.btns &= ~(0x01 << 0x0);
-                    }
-                    else if(evt.key.keysym.sym == SDLK_a){
-                        memory.btns &= ~(0x01 << 0x1);
-                    }
-                    else if(evt.key.keysym.sym == SDLK_RETURN){
-                        memory.btns &= ~(0x01 << 0x3);
-                    }
-                    else if(evt.key.keysym.sym == SDLK_BACKSPACE){
-                        memory.btns &= ~(0x01 << 0x2);
-                    }
+                    if(evt.type == SDL_KEYUP)
+                        memory.joypad |= bit_pos;
+                    else
+                        memory.joypad &= ~(bit_pos);
                     break;
                 }
+                case SDL_QUIT: quit = true; break;
                 default: break;
             }
         }
-        
         
         cycles = 0;
         uint32_t delta = (SDL_GetTicks() - time);
@@ -145,6 +108,6 @@ int main(int argc, const char * argv[]) {
     }
     
     
-    return 0;
+    return EXIT_SUCCESS;
 }
 

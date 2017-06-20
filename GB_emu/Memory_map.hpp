@@ -32,8 +32,7 @@ class Memory_map{
 
     
 public:
-    uint8_t d_pad;
-    uint8_t btns;
+    uint8_t joypad;
     uint8_t sync_cycle(uint8_t cycle);
     Memory_map(Cart *cart, PPU * ppu, APU * apu);
     uint8_t read(uint16_t addr);

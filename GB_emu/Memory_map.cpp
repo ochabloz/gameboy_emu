@@ -13,8 +13,7 @@ Memory_map::Memory_map(Cart *cart, PPU * ppu, APU * apu){
     this->cart = cart;
     this->ppu = ppu;
     this->apu = apu;
-    d_pad = 0x0F;
-    btns  = 0x0F;
+    joypad = 0xFF;
     joypad_reg = 0x00;
     DMA_src = 0;
     DMA_dst = 0;
@@ -66,15 +65,13 @@ uint8_t Memory_map::read(uint16_t addr){
     }
     else if(addr >= 0xFF00 && addr <= 0xFF7F){ // IO controls address space
         if(addr == 0xFF00){
-            if(joypad_reg == 0x1){
-                return  (joypad_reg << 4) | btns | 0xC0;
+            if(joypad_reg == 0x10){
+                return 0xC0 | 0x10 | (joypad >> 4); 
             }
-            else if (joypad_reg == 0x2){
-                return (joypad_reg << 4) | d_pad | 0xC0;
+            else if (joypad_reg == 0x20){
+                return 0xC0 | 0x20 | (joypad & 0x0F);
             }
-            else{
-                return 0xFF;
-            }
+            return 0xFF;
         }
         else if (addr == 0xFF01){
             return serial_recieved;
@@ -121,7 +118,7 @@ void Memory_map::write(uint16_t addr, uint8_t data){
     }
     else if(addr >= 0xFF00 && addr <= 0xFF7F){ // IO controls address space
         if(addr == 0xFF00){
-            joypad_reg = (data >> 4) & 0x3;
+            joypad_reg = data & 0x30;
         }
         else if (addr == 0xFF01){
             serial_data = data;
