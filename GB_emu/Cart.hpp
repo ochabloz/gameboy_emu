@@ -13,6 +13,7 @@
 #include <stdint.h>
 #include <fstream>
 #include <vector>
+#include <string>
 
 #define RAM_MODE 1
 #define ROM_MODE 0
@@ -34,7 +35,7 @@ class Cart {
     int ram_bank;
     std::vector<char> rom;
     std::vector<char> ram;
-    
+    std::string file_path_rom;        
     char TITLE[0x10];
     uint32_t rom_size;
     uint8_t ram_size;
