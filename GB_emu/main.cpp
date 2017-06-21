@@ -22,6 +22,8 @@ const int SCREEN_WIDTH = 160 * 4;
 const int SCREEN_HEIGHT = 144 * 4;
 
 
+void audio_callback(void * data, uint8_t * stream, int len);
+
 int main(int argc, const char * argv[]) {
     if (argc <= 1) {
         printf("Usage : gb_emu romfile.gb");
@@ -34,7 +36,7 @@ int main(int argc, const char * argv[]) {
     SDL_Surface* screenSurface = NULL;
     
     //Initialize SDL
-    if( SDL_Init(SDL_INIT_VIDEO | SDL_INIT_TIMER)< 0 ){
+    if( SDL_Init(SDL_INIT_VIDEO | SDL_INIT_TIMER | SDL_INIT_AUDIO)< 0 ){
         return 1;
     }
     char title[16];
@@ -46,6 +48,17 @@ int main(int argc, const char * argv[]) {
     //Get window surface
     screenSurface = SDL_GetWindowSurface(window);
     
+    
+    // initialise audio
+    static SDL_AudioSpec audio_spec;
+    audio_spec.callback = audio_callback;
+    audio_spec.userdata = NULL;
+    audio_spec.freq = 44100;
+    if (SDL_OpenAudio(&audio_spec, NULL) < 0) {
+        fprintf(stderr, "Cannot open audio: %s", SDL_GetError());
+        return EXIT_FAILURE;
+    }
+    
     uint32_t time = SDL_GetTicks();
     bool quit = false;
     PPU ppu;
@@ -53,6 +66,7 @@ int main(int argc, const char * argv[]) {
     Memory_map memory(&cart, &ppu, &apu);
     Cpu processor(&memory);
     uint64_t cycles = 0;
+    SDL_PauseAudio(0);
     while(!quit){
         time = SDL_GetTicks();
         while (!ppu.screen_complete) {
@@ -148,3 +162,8 @@ int main(int argc, const char * argv[]) {
     return 0;
 }
 
+
+void audio_callback(void * data, uint8_t * stream, int len){
+    uint8_t usr_data[512];
+    SDL_MixAudio(stream, usr_data, 512, SDL_MIX_MAXVOLUME);
+}

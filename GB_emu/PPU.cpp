@@ -126,12 +126,19 @@ void PPU::update_palette(uint8_t P_REG, uint32_t * palette){
 #define MODE2 2 /* Searching OAM-VRAM */            /* OAM-VRAM not available to CPU */
 #define MODE3 3 /* Transfer Data to LCD driver */   /* OAM-VRAM not available to CPU */
 
-
-
+int test_cycles;
+int last_ly;
+// 70224 cycles in total
 uint8_t PPU::run(uint32_t cycles){
     uint8_t ret = 0;
     if (cycles) {
         lyc_int = 0;
+        /* if (LY != last_ly) {
+            printf("LY = %d, test_cycles = %d\n",last_ly, test_cycles);
+            last_ly = LY;
+            test_cycles = 0;
+        }
+        test_cycles += cycles; */
     }
     
     cycles_until_next_mode -= cycles;
