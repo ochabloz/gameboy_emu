@@ -63,8 +63,20 @@
       </BuildableProductRunnable>
       <CommandLineArguments>
          <CommandLineArgument
-            argument = "/Users/Olivier/Dropbox/Coding/gameboy/emu/picross.gb"
+            argument = "-r /Users/Olivier/Dropbox/Coding/gameboy/emu/pkmn.gb"
             isEnabled = "YES">
+         </CommandLineArgument>
+         <CommandLineArgument
+            argument = "-s 2.31"
+            isEnabled = "YES">
+         </CommandLineArgument>
+         <CommandLineArgument
+            argument = "-f"
+            isEnabled = "NO">
+         </CommandLineArgument>
+         <CommandLineArgument
+            argument = "-r /Users/Olivier/Dropbox/Coding/gameboy/emu/picross.gb"
+            isEnabled = "NO">
          </CommandLineArgument>
       </CommandLineArguments>
       <AdditionalOptions>

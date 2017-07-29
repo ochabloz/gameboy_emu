@@ -17,19 +17,53 @@
 #include "APU.hpp"
 #include <SDL2/SDL.h>
 
-//Screen dimension constants
-const int SCREEN_WIDTH = 160 * 4;
-const int SCREEN_HEIGHT = 144 * 4;
+#include <stdlib.h>
+#include <unistd.h>
+
+#include <getopt.h>
+
+
 
 
 void audio_callback(void * data, uint8_t * stream, int len);
 
-int main(int argc, const char * argv[]) {
-    if (argc <= 1) {
-        printf("Usage : gb_emu romfile.gb");
+int main(int argc, char * const argv[]) {
+    double screen_scale = 4;
+    int screen_width = 160.0 * screen_scale;
+    int screen_height = 144.0 * screen_scale;
+    bool fullscreen = false;
+    int c;
+    char * cart_name = nullptr;
+    char * boot_rom  = nullptr;
+    // parse arguments :
+    while ((c = getopt(argc, argv, "fr:b:s:")) != -1) {
+        switch (c) {
+            case 'f':
+                fullscreen = true;
+                break;
+            case 's':
+                if (atof(optarg)) {
+                    screen_scale = atof(optarg);
+                    screen_width = 160.0 * screen_scale;
+                    screen_height = 144.0 * screen_scale;
+                }
+                break;
+            case 'r':
+                cart_name = optarg;
+                break;
+            case 'b':
+                boot_rom = optarg;
+            default:
+                break;
+        }
+    }
+    
+    if (cart_name == nullptr) {
+        printf("Usage : gb_emu -r romfile.gb\n");
         return EXIT_SUCCESS;
     }
-    Cart cart(argv[1]);
+    
+    Cart cart(cart_name);
     //The window we'll be rendering to
     SDL_Window* window = NULL;
     //The surface contained by the window
@@ -43,7 +77,10 @@ int main(int argc, const char * argv[]) {
     cart.get_title(title);
     window = SDL_CreateWindow( title, SDL_WINDOWPOS_CENTERED,
                                       SDL_WINDOWPOS_CENTERED,
-                                      SCREEN_WIDTH, SCREEN_HEIGHT, SDL_WINDOW_SHOWN );
+                              screen_width, screen_height,
+                              SDL_WINDOW_SHOWN | SDL_WINDOW_RESIZABLE |
+                              ((fullscreen) ? SDL_WINDOW_FULLSCREEN_DESKTOP : 0)
+                              );
     
     //Get window surface
     screenSurface = SDL_GetWindowSurface(window);
@@ -117,16 +154,18 @@ int main(int argc, const char * argv[]) {
         {
             //Apply the image stretched
             SDL_Rect stretchRect;
-            stretchRect.x = 0;
+            
             stretchRect.y = 0;
-            stretchRect.w = SCREEN_WIDTH;
-            stretchRect.h = SCREEN_HEIGHT;
+            SDL_GetWindowSize(window, &stretchRect.w, &stretchRect.h);
+            screenSurface = SDL_GetWindowSurface(window);
+            float scale = stretchRect.h / 140.0;
+            stretchRect.x = stretchRect.w;
+            stretchRect.w = scale * 160.0;
+            stretchRect.x = (stretchRect.x - stretchRect.w) / 2;
             SDL_BlitScaled(ppu.get_screen(), NULL, screenSurface, &stretchRect );
             SDL_UpdateWindowSurface(window);
         }
     }
-    
-    
     return EXIT_SUCCESS;
 }
 
