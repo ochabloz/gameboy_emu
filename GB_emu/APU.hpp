@@ -40,9 +40,15 @@ class APU {
     uint8_t sound_sel_output;   // mapped on 0xFF25
     uint8_t sound_enable;       // mapped on 0xFF26
     
+    
+    uint32_t sample_num;
+    
 public:
+    APU();
     uint8_t read(uint16_t addr);
     void write(uint16_t addr, uint8_t data);
+    
+    void generate_channel_1(uint16_t * buffer, uint16_t buffer_len);
 };
 
 #endif /* APU_hpp */

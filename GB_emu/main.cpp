@@ -37,7 +37,7 @@ int main(int argc, const char * argv[]) {
     
     //Initialize SDL
     if( SDL_Init(SDL_INIT_VIDEO | SDL_INIT_TIMER | SDL_INIT_AUDIO)< 0 ){
-        return 1;
+        return EXIT_FAILURE;
     }
     char title[16];
     cart.get_title(title);
@@ -49,22 +49,26 @@ int main(int argc, const char * argv[]) {
     screenSurface = SDL_GetWindowSurface(window);
     
     
-    // initialise audio
-    static SDL_AudioSpec audio_spec;
-    audio_spec.callback = audio_callback;
-    audio_spec.userdata = NULL;
-    audio_spec.freq = 44100;
-    if (SDL_OpenAudio(&audio_spec, NULL) < 0) {
-        fprintf(stderr, "Cannot open audio: %s", SDL_GetError());
-        return EXIT_FAILURE;
-    }
-    
     uint32_t time = SDL_GetTicks();
     bool quit = false;
     PPU ppu;
     APU apu;
     Memory_map memory(&cart, &ppu, &apu);
     Cpu processor(&memory);
+    
+    // initialise audio
+    static SDL_AudioSpec audio_spec;
+    audio_spec.format = AUDIO_S16;
+    audio_spec.callback = audio_callback;
+    audio_spec.userdata = &apu;
+    audio_spec.freq = 44100;
+    audio_spec.samples = 2048;
+    if (SDL_OpenAudio(&audio_spec, NULL) < 0) {
+        fprintf(stderr, "Cannot open audio: %s", SDL_GetError());
+        return EXIT_FAILURE;
+    }
+    
+    
     uint64_t cycles = 0;
     SDL_PauseAudio(0);
     while(!quit){
@@ -100,6 +104,7 @@ int main(int argc, const char * argv[]) {
                     break;
                 }
                 case SDL_QUIT: quit = true; break;
+                
                 default: break;
             }
         }
@@ -127,6 +132,9 @@ int main(int argc, const char * argv[]) {
 
 
 void audio_callback(void * data, uint8_t * stream, int len){
-    uint8_t usr_data[512];
-    SDL_MixAudio(stream, usr_data, 512, SDL_MIX_MAXVOLUME);
+    APU apu_data = *(APU*)data;
+    uint16_t usr_data[4096 * 2];
+    memset(stream, 0, len);
+    apu_data.generate_channel_1(usr_data, len);
+    SDL_MixAudio(stream, (uint8_t*)usr_data, len, SDL_MIX_MAXVOLUME);
 }

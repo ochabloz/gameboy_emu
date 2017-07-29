@@ -7,7 +7,7 @@
 //
 
 #include "APU.hpp"
-
+APU::APU(): sample_num(0){};
 
 uint8_t APU::read(uint16_t addr){
     switch (addr) {
@@ -67,5 +67,27 @@ void APU::write(uint16_t addr, uint8_t data){
         case 0xFF24: chan_controls = data;      break;
         case 0xFF25: sound_sel_output = data;   break;
         case 0xFF26: sound_enable = data;       break;
+    }
+}
+
+void APU::generate_channel_1(uint16_t * buffer, uint16_t buffer_len){
+    // Generate square wave
+    #define FREQ 44100 // number of samples / second
+    #define SQ_FREQ 100  // the frequency of the square wave
+
+    /* So the period of the sq wave will contain FREQ / SQ_FREQ samples */
+    uint32_t samples_per_period = FREQ / SQ_FREQ;
+    
+    /* Half of the period the signal is up, half down */
+    
+    /* the signal is generated with a for loop*/
+    for (uint32_t i = 0; i < buffer_len; i++) {
+        if ((i + sample_num) % samples_per_period < (samples_per_period / 2)) {
+            buffer[i] = 0;//28000;
+        }
+        else{
+            buffer[i] = 0;
+        }
+        sample_num = ((sample_num + 1) > FREQ) ? 0 : sample_num + 1;
     }
 }
