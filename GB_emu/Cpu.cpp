@@ -179,8 +179,10 @@ uint8_t Cpu::run(){
         
         case 0x07: RLC_Handler(&A); break;
         
-        case 0x08:{ // LD (##), SP
-            uint16_t addr = read_PC_mem() | (read_PC_mem() << 8);
+        case 0x08:
+        {   // LD [##], SP
+            uint16_t addr = read_PC_mem();
+            addr |= (read_PC_mem() << 8);
             write_mem(addr, (uint8_t)SP);
             write_mem(addr + 1, (uint8_t)(SP>>8));
             break;
@@ -199,8 +201,16 @@ uint8_t Cpu::run(){
         case 0x11: ld_nn_Handler(&D, &E); break;
         case 0x21: ld_nn_Handler(&H, &L); break;
         case 0x31: ld_nn_Handler((uint8_t*)&SP + 1 , (uint8_t*)&SP); break;
-        // TODO check if it works :s
         case 0x32: ldd_hla_Handler(); break;
+        
+        case 0x34:
+        {   // HL++
+            uint8_t tmp = readHL() + 1;
+            writeHL(tmp);
+            SF_Z(tmp == 0); SF_N(0); SF_H(!(tmp & 0xF));
+            break;
+        }
+        
         case 0x3A: ldd_ahl_Handler(); break;
             
         case 0x3F: flag_c ^= true; SF_N(0); SF_H(0); break;
@@ -310,8 +320,7 @@ uint8_t Cpu::run(){
         case 0x1C: E++; SF_Z(E== 0); SF_N(0); SF_H(!(E & 0xF)); break;
         case 0x24: H++; SF_Z(H== 0); SF_N(0); SF_H(!(H & 0xF)); break;
         case 0x2C: L++; SF_Z(L== 0); SF_N(0); SF_H(!(L & 0xF)); break;
-        case 0x34: {uint8_t tmp = readHL() + 1; writeHL(tmp);
-            SF_Z(tmp == 0); SF_N(0); SF_H(!(tmp & 0xF)); break;}
+        
 
         case 0x77: write_mem(REG(H,L), A); break;
         case 0x70: write_mem(REG(H,L), B); break;
@@ -411,7 +420,13 @@ uint8_t Cpu::run(){
         case 0xBF: compareA(A); break;
         case 0xFE: compareA(read_PC_mem()); break;
             
-        case 0x18: PC += (int8_t)read_PC_mem(); cycle += 4; break;
+        case 0x18:
+        {
+            int8_t f_pc = (int8_t)read_PC_mem();
+            PC += f_pc;
+            cycle += 4;
+            break;
+        }
         case 0xC3: JP_nn_Handler(); break;
         case 0xE9: PC = REG(H, L); break; // Jump to address contained in HL.
             
@@ -940,7 +955,8 @@ inline void Cpu::compareA(uint8_t reg){
 }
 
 inline void Cpu::call_handler(){
-    uint16_t addr = read_PC_mem() | (read_PC_mem() << 8);
+    uint16_t addr = read_PC_mem();
+    addr |= (read_PC_mem() << 8);
     push((uint8_t)(PC >> 8));
     push((uint8_t)(PC & 0xFF));
     PC = addr;
