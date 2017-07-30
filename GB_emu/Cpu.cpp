@@ -1031,27 +1031,25 @@ inline void Cpu::add16bits(uint8_t * HD, uint8_t * LD, uint8_t * HS, uint8_t * L
 }
 
 inline void Cpu::daa_handler(){
+    /** decimal adjust accumulator (A)
+     * Exemple =>A = 0x11 + 0x6 = 0x17; daa convert 0x17 to 0x23 => base10(0x17) = 23
+     */
     int a = A;
-    if (!RF_N()){
-        if (RF_H() || (a & 0xF) > 9)
+    if (!flag_n){
+        if (flag_h || (a & 0xF) > 9)
             a += 0x06;
-            
-        if (RF_C() || a > 0x9F)
+        if (flag_c|| a > 0x9F)
             a += 0x60;
     }
     else{
-        if (RF_H())
+        if (flag_h)
             a = (a - 6) & 0xFF;
-        if (RF_C())
+        if (flag_c)
             a -= 0x60;
     }
-    SF_H(0); SF_Z(0);
-    if(!RF_C()){
+    if(!flag_c){
         SF_C((a & 0x100) == 0x100);
     }
-        
-    a &= 0xFF;
-    SF_Z(a==0);
     A = (uint8_t)a;
     SF_Z(A == 0);
     SF_H(0);
