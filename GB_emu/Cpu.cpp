@@ -23,10 +23,11 @@ using namespace std;
 // misc instruction implemented by macros
 #define check_bit(x, reg) do{SF_Z(((reg) & (0x1 << (x))) == 0); SF_H(1); SF_N(0);}while(0)
 
-Cpu::Cpu(Memory_map *m):
-PC(0x100), SP(0xfffe), A(0x11), B(0x00), C(0x13), D(0x00), E(0xd8), H(0x01), L(0x4d),
+Cpu::Cpu(Memory_map *m, bool dirty_boot):
+SP(0xfffe), A(0x11), B(0x00), C(0x13), D(0x00), E(0xd8), H(0x01), L(0x4d),
 IME(0), timer_DIV(0xABCC), halted(false), timer_TMA(0x00), timer_TIMA(0x00), timer_TCRL(0xF8),
 IE(0x00), IF(0x01){
+    PC = (dirty_boot) ? 0x00 : 0x100;
     writeF(0xB0);
     
     mem = m;
@@ -1052,6 +1053,8 @@ inline void Cpu::daa_handler(){
     a &= 0xFF;
     SF_Z(a==0);
     A = (uint8_t)a;
+    SF_Z(A == 0);
+    SF_H(0);
 }
 
 inline void Cpu::RR_handler(uint8_t * reg){

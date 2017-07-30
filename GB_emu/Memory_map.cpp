@@ -9,7 +9,7 @@
 #include "Memory_map.hpp"
 #include <string.h>
 
-Memory_map::Memory_map(Cart *cart, PPU * ppu, APU * apu){
+Memory_map::Memory_map(Cart *cart, PPU * ppu, APU * apu): boot_rom_activated(false){
     this->cart = cart;
     this->ppu = ppu;
     this->apu = apu;
@@ -18,6 +18,23 @@ Memory_map::Memory_map(Cart *cart, PPU * ppu, APU * apu){
     DMA_src = 0;
     DMA_dst = 0;
 }
+
+Memory_map::Memory_map(Cart *cart, PPU * ppu, APU * apu, const char * boot_rom_file){
+    this->cart = cart;
+    this->ppu = ppu;
+    this->apu = apu;
+    joypad = 0xFF;
+    joypad_reg = 0x00;
+    DMA_src = 0;
+    DMA_dst = 0;
+        
+    std::ifstream file(boot_rom_file, std::ios::binary);
+    boot_rom = std::vector<char>(std::istreambuf_iterator<char>(file),
+                            std::istreambuf_iterator<char>());
+    file.close();
+    boot_rom_activated = true;
+}
+
 
 uint8_t Memory_map::sync_cycle(uint8_t cycle){
     // Here      : DMA takes 640 cycles to complete
@@ -42,6 +59,10 @@ uint8_t Memory_map::sync_cycle(uint8_t cycle){
 }
 
 uint8_t Memory_map::read(uint16_t addr){
+    if(boot_rom_activated && addr < 0x0100){
+        return boot_rom[addr];
+    }
+    
     if(addr < 0x8000) { // ROM address space
         return cart->read(addr);
     }
@@ -88,10 +109,7 @@ uint8_t Memory_map::read(uint16_t addr){
     else if(addr >= 0xFF80 && addr <= 0xFFFE){ // IO controls address space
         return hram[addr - 0xFF80];
     }
-    else{
-        printf("oops");
-    }
-    return 0x00;
+    return 0xFF;
 }
 
 void Memory_map::write(uint16_t addr, uint8_t data){
@@ -140,13 +158,11 @@ void Memory_map::write(uint16_t addr, uint8_t data){
                 case 0xFF10:
                 case 0xFF20: apu->write(addr, data); break;
                 case 0xFF40: ppu->write(addr, data); break;
+                case 0xFF50: boot_rom_activated = (data) ? false : true; break;
             }
         }
     }
     else if(addr >= 0xFF80 && addr <= 0xFFFE){ // IO controls address space
         hram[addr - 0xFF80] = data;
-    }
-    else{
-        printf("oops");
     }
 }

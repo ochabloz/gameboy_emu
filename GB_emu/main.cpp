@@ -90,8 +90,16 @@ int main(int argc, char * const argv[]) {
     bool quit = false;
     PPU ppu;
     APU apu;
-    Memory_map memory(&cart, &ppu, &apu);
-    Cpu processor(&memory);
+    Memory_map *memory;
+    Cpu * processor;
+    if(boot_rom == nullptr){
+        memory = new Memory_map(&cart, &ppu, &apu);
+        processor = new Cpu(memory, false);
+    }
+    else{
+        memory = new Memory_map(&cart, &ppu, &apu, boot_rom);
+        processor = new Cpu(memory, true);
+    }
     
     // initialise audio
     static SDL_AudioSpec audio_spec;
@@ -111,7 +119,7 @@ int main(int argc, char * const argv[]) {
     while(!quit){
         time = SDL_GetTicks();
         while (!ppu.screen_complete) {
-            cycles += processor.run();
+            cycles += processor->run();
         }
         SDL_Event evt;
         while (SDL_PollEvent(&evt)) {
@@ -135,9 +143,9 @@ int main(int argc, char * const argv[]) {
                         default:            bit_pos = 0x00; break;
                     }
                     if(evt.type == SDL_KEYUP)
-                        memory.joypad |= bit_pos;
+                        memory->joypad |= bit_pos;
                     else
-                        memory.joypad &= ~(bit_pos);
+                        memory->joypad &= ~(bit_pos);
                     break;
                 }
                 case SDL_QUIT: quit = true; break;

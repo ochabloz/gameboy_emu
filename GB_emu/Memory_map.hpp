@@ -24,6 +24,8 @@ class Memory_map{
     PPU * ppu;
     APU * apu;
     uint8_t joypad_reg;
+    std::vector<char> boot_rom;
+    bool boot_rom_activated;
     
     int serial_cycles_until_shift;
     int serial_data;
@@ -35,6 +37,7 @@ public:
     uint8_t joypad;
     uint8_t sync_cycle(uint8_t cycle);
     Memory_map(Cart *cart, PPU * ppu, APU * apu);
+    Memory_map(Cart *cart, PPU * ppu, APU * apu, const char * boot_rom_file);
     uint8_t read(uint16_t addr);
     void write(uint16_t addr, uint8_t data);
 };

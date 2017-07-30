@@ -114,7 +114,7 @@ class Cpu {
     inline void run_timer();
 public:
     
-    Cpu(Memory_map *m);
+    Cpu(Memory_map *m, bool dirty_boot);
     ~Cpu();
     uint8_t cycle;
     uint8_t mem_cycle;
