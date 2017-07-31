@@ -63,7 +63,7 @@
       </BuildableProductRunnable>
       <CommandLineArguments>
          <CommandLineArgument
-            argument = "-r /Users/Olivier/Dropbox/Coding/gameboy/emu/pkmn.gb"
+            argument = "-r /Users/Olivier/Dropbox/Coding/gameboy/emu/pkmn2.gbc"
             isEnabled = "YES">
          </CommandLineArgument>
          <CommandLineArgument
@@ -71,7 +71,7 @@
             isEnabled = "YES">
          </CommandLineArgument>
          <CommandLineArgument
-            argument = "-s 2.31"
+            argument = "-s 3"
             isEnabled = "YES">
          </CommandLineArgument>
          <CommandLineArgument

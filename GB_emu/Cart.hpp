@@ -25,9 +25,12 @@
 #define MBC1_RAM_BAT 0x03
 #define MBC2 0x05
 
+#define MBC3_RAM_TIM_BAT 0x10
+
 #define MBC5 0x19
 #define MBC5_RAM 0x1A
 #define MBC5_RAM_BAT 0x1B
+
 
 
 class Cart {
@@ -44,9 +47,11 @@ class Cart {
     
     bool cart_ram_enable;
     uint8_t rom_ram_mode;
-    //uint8_t cart_ram[0x8000];
+    uint8_t rtc[5];
+    
     
     void mbc1_write(uint16_t addr, uint8_t data);
+    void mbc3_write(uint16_t addr, uint8_t data);
     void mbc5_write(uint16_t addr, uint8_t data);
     
 public:

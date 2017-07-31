@@ -14,7 +14,9 @@ Cart::Cart(const char * file_path){
     rom = std::vector<char>(std::istreambuf_iterator<char>(file),
                                std::istreambuf_iterator<char>());
     file.close();
-    
+    if(rom.size() == 0){
+        return;
+    }
     cart_ram_enable = false;
     
     for (int i = 0; i < 0x10; i++) {
@@ -45,6 +47,7 @@ Cart::Cart(const char * file_path){
         case 0x04: ram_size = 16; break;
         default:   ram_size = 0; break;
     }
+    // When a cartridge contains ram, create or open a file with name "<rom_file>.sav"
     if (ram_size > 0) {
         file_path_rom = std::string(file_path);
         std::string sav_name = file_path_rom + ".sav";
@@ -86,6 +89,9 @@ uint8_t Cart::read(uint16_t addr){
         return rom[(rom_bank1 * 0x4000) + (addr - 0x4000)];
     }
     else if (addr < 0xC000){
+        if(cart_type == MBC3_RAM_TIM_BAT && ram_bank > 0x7){
+            return rtc[ram_bank-8];
+        }
         uint32_t ram_addr = (ram_bank * 0x2000) + (addr - 0xA000);
         return ram[ram_addr];
     }
@@ -150,7 +156,7 @@ void Cart::mbc1_write(uint16_t addr, uint8_t data){
 
 void Cart::mbc5_write(uint16_t addr, uint8_t data){
     if (addr < 0x2000) {
-        cart_ram_enable = (data == 0x0A);
+        cart_ram_enable = (data & 0x0F) == 0xA;
     }
     else if(addr >= 0x2000 && addr < 0x4000){
         rom_bank1 = (data > (rom_size-1)) ? rom_size - 1 : data;
@@ -173,6 +179,48 @@ void Cart::mbc5_write(uint16_t addr, uint8_t data){
     }
 }
 
+void Cart::mbc3_write(uint16_t addr, uint8_t data){
+    switch (addr & 0xF000) {
+        case 0x0000:
+        case 0x1000:
+        { //  RAM and RTC Registers Enable
+            cart_ram_enable = (data & 0x0F) == 0xA;
+            break;
+        }
+        case 0x2000:
+        case 0x3000:
+        { // ROM bank select
+            rom_bank1 = (!data) ? 0x1 : data;
+            break;
+        }
+        case 0x4000:
+        case 0x5000:
+        { // RAM Bank/RTC Register
+            ram_bank = data;
+            break;
+        }
+        case 0x6000:
+        case 0x7000:
+        { // Latch Clock Data
+            break;
+        }
+        case 0xA000:
+        case 0xB000:
+        {
+            if (ram_bank > 7) {
+                rtc[ram_bank-8] = data;
+            }
+            else{
+                ram[(ram_bank * 0x2000) + (addr - 0xA000)] = data;
+            }
+        }
+            break;
+            
+        default:
+            break;
+    }
+}
+
 void Cart::write(uint16_t addr, uint8_t data){
     switch (cart_type) {
         case ROM_ONLY: break;
@@ -181,12 +229,14 @@ void Cart::write(uint16_t addr, uint8_t data){
         case MBC1_RAM:
         case MBC1_RAM_BAT:
             mbc1_write(addr, data); break;
-            
+        
+        case MBC3_RAM_TIM_BAT:
+            mbc3_write(addr, data);
+            break;
         case MBC5:
         case MBC5_RAM:
         case MBC5_RAM_BAT:
             mbc5_write(addr, data); break;
-            
         default:
             break;
     }
@@ -196,4 +246,5 @@ void Cart::get_title(char *title){
     for (int i = 0; i < 16; i++) {
         title[i] = this->TITLE[i];
     }
+    title[15] = '\0';
 }
