@@ -13,6 +13,7 @@
 #include <stdint.h>
 #include <SDL2/SDL.h>
 
+#define BGB
 
 #ifdef BGB // BGB palette (greenish tint)
 #define COLOR0 0xe0f8d0
@@ -80,6 +81,7 @@ public:
     uint8_t read(uint16_t addr);
     void write(uint16_t addr, uint8_t data);
     SDL_Surface * get_screen();
+    void set_palette(uint32_t col0, uint32_t col1, uint32_t col2, uint32_t col3);
     bool screen_complete;
     uint8_t vram[0x2000];
     struct OAM oam[40];

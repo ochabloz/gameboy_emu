@@ -285,6 +285,7 @@ uint8_t PPU::run(uint32_t cycles){
 
 void PPU::do_line(){
     if (!DISPLAY_ENABLE()) {
+        // when display is off, fill the line with color 0
         for (int i = 0; i < (160); i++) {
             ((uint32_t *)screen->pixels)[LY * 160 + i] = global_palette[0];
         }
@@ -359,25 +360,16 @@ void PPU::do_line(){
                 }
             }
         }
-        
-        for (int i = 0; i < 21; i++) { // 20 Tiles per line + 1 if there is an offset
-            
-            x += 8;
-        }
     }
-    
-    
-    
     
     
     int nb_sprites = 0; // Keep track of how many sprites are rendered on the line since a maximum of 10 is allowed per line.
     int8_t priority[160] = {0};
     if(SPRITE_ENABLE()){
         for (int i = 0; i < 40; i++) {
-            // TODO : lots of things work only for 8x8 sprites
-            if (oam[i].X < (160 + 8) && oam[i].X > 0 && oam[i].Y < (144 + 16) && oam[i].Y > 0){
+            if (oam[i].X < (160 + 8) && oam[i].X != 0 && oam[i].Y < (144 + 16) && oam[i].Y != 0){
                 uint8_t res = 8 - (oam[i].Y - 8 - LY);
-                if (res < 8) {
+                if ((res < 8 && !SPRITE_SIZE()) || (res < 16 && SPRITE_SIZE())) {
                     nb_sprites++;
                     
                     // Load pixels from VRAM
@@ -431,4 +423,12 @@ SDL_Surface * PPU::get_screen(){
         return screen;
     }
     return (SDL_Surface*)nullptr;
+}
+
+
+void PPU::set_palette(uint32_t col0, uint32_t col1, uint32_t col2, uint32_t col3){
+    global_palette[0] = MAP_COLOR(col0);
+    global_palette[1] = MAP_COLOR(col1);
+    global_palette[2] = MAP_COLOR(col2);
+    global_palette[3] = MAP_COLOR(col3);
 }
