@@ -29,8 +29,8 @@ void audio_callback(void * data, uint8_t * stream, int len);
 
 int main(int argc, char * const argv[]) {
     double screen_scale = 4;
-    int screen_width = 160.0 * screen_scale;
-    int screen_height = 144.0 * screen_scale;
+    int screen_width = ceilf(160.0 * screen_scale);
+    int screen_height = ceilf(144.0 * screen_scale);
     bool fullscreen = false;
     int c;
     char * cart_name = nullptr;
@@ -166,10 +166,11 @@ int main(int argc, char * const argv[]) {
             stretchRect.y = 0;
             SDL_GetWindowSize(window, &stretchRect.w, &stretchRect.h);
             screenSurface = SDL_GetWindowSurface(window);
-            float scale = stretchRect.h / 140.0;
+            float scale = floor(stretchRect.h / 140.0 * 10.0) / 10.0;
             stretchRect.x = stretchRect.w;
             stretchRect.w = scale * 160.0;
             stretchRect.x = (stretchRect.x - stretchRect.w) / 2;
+            stretchRect.x = (stretchRect.x < 0) ? 0 : stretchRect.x;
             SDL_BlitScaled(ppu.get_screen(), NULL, screenSurface, &stretchRect );
             SDL_UpdateWindowSurface(window);
         }
