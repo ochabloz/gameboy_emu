@@ -59,7 +59,7 @@ uint8_t Memory_map::sync_cycle(uint8_t cycle){
 }
 
 uint8_t Memory_map::read(uint16_t addr){
-    if(boot_rom_activated && addr < 0x0100){
+    if(boot_rom_activated && addr < 0x0100 && boot_rom.size() >= addr){
         return boot_rom[addr];
     }
     
@@ -153,12 +153,14 @@ void Memory_map::write(uint16_t addr, uint8_t data){
             DMA_src = data << 8;
             DMA_dst = 0xFE00;
         }
+        else if (addr == 0xFF50){
+            boot_rom_activated = (data) ? false : true;
+        }
         else {
             switch (addr & 0xFFF0){
                 case 0xFF10:
                 case 0xFF20: apu->write(addr, data); break;
                 case 0xFF40: ppu->write(addr, data); break;
-                case 0xFF50: boot_rom_activated = (data) ? false : true; break;
             }
         }
     }
