@@ -23,6 +23,8 @@ Cart::Cart(const char * file_path){
         TITLE[i] = rom[0x134 + i];
     }
     cart_type = rom[0x147];
+    gb_mode = rom[0x143];
+    super_gb = rom[0x146];
     
     switch (rom[0x148]) { // record the total number of rom banks
         case 0x00: rom_size = 2; break;
@@ -64,6 +66,9 @@ Cart::Cart(const char * file_path){
             ram = std::vector<char>(ram_size * 0x2000, 0);
         }
         
+        if(cart_type == MBC3_RAM_TIM_BAT){
+            rtc = new Rtc(file_path);
+        }
     }
     
     ram_bank  = 0;
@@ -72,6 +77,9 @@ Cart::Cart(const char * file_path){
 }
 
 Cart::~Cart(){
+    if (rtc != nullptr){
+        delete rtc;
+    }
     if (ram_size > 0) {
         std::string sav_name = file_path_rom + ".sav";
         std::ofstream sav_file (sav_name, std::ios::binary);
@@ -89,8 +97,8 @@ uint8_t Cart::read(uint16_t addr){
         return rom[(rom_bank1 * 0x4000) + (addr - 0x4000)];
     }
     else if (addr < 0xC000){
-        if(cart_type == MBC3_RAM_TIM_BAT && ram_bank > 0x7){
-            return rtc[ram_bank-8];
+        if(rtc != nullptr && ram_bank > 0x7){
+            return rtc->read((time_rtc)(ram_bank - 8));
         }
         uint32_t ram_addr = (ram_bank * 0x2000) + (addr - 0xA000);
         return ram[ram_addr];
@@ -202,13 +210,15 @@ void Cart::mbc3_write(uint16_t addr, uint8_t data){
         case 0x6000:
         case 0x7000:
         { // Latch Clock Data
+            rtc->latch(data);
             break;
         }
         case 0xA000:
         case 0xB000:
         {
             if (ram_bank > 7) {
-                rtc[ram_bank-8] = data;
+                rtc->write((time_rtc)(ram_bank - 8), data);
+                printf("wrote 0x%02x in rtc[0x%02x]\n", data, ram_bank-8);
             }
             else{
                 ram[(ram_bank * 0x2000) + (addr - 0xA000)] = data;
@@ -247,4 +257,19 @@ void Cart::get_title(char *title){
         title[i] = this->TITLE[i];
     }
     title[15] = '\0';
+}
+
+// check header checksum of the cartridge
+// return 0 for wrong checksum
+// return 1 for GB
+// return 2 for GBC
+uint8_t Cart::status(){
+    uint8_t checksum = 0;
+    for (int i = 0x134; i <= 0x14c; i++) {
+        checksum = checksum - rom[i] - 1;
+    }
+    if (checksum == rom[0x14D]) {
+        return (gb_mode == 0x80 || gb_mode == 0xC0) ? 0x2 : 0x1;
+    }
+    return 0x00;
 }

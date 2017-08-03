@@ -64,6 +64,10 @@ int main(int argc, char * const argv[]) {
     }
     
     Cart cart(cart_name);
+    if(!cart.status()){
+        printf("the cartridge header doesn't match the checksum\n");
+        return EXIT_SUCCESS;
+    }
     //The window we'll be rendering to
     SDL_Window* window = NULL;
     //The surface contained by the window

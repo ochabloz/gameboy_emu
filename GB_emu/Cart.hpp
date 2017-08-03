@@ -14,6 +14,7 @@
 #include <fstream>
 #include <vector>
 #include <string>
+#include "rtc.hpp"
 
 #define RAM_MODE 1
 #define ROM_MODE 0
@@ -24,6 +25,10 @@
 #define MBC1_RAM 0x02
 #define MBC1_RAM_BAT 0x03
 #define MBC2 0x05
+#define MBC2_BAT 0x06
+#define ROM_RAM 0x08
+#define ROM_RAM_BAT 0x09
+#define MMM01 0x0b
 
 #define MBC3_RAM_TIM_BAT 0x10
 
@@ -44,11 +49,14 @@ class Cart {
     uint8_t ram_size;
     uint8_t header_checksum;
     uint8_t cart_type;
+    uint8_t gb_mode;
+    uint8_t super_gb;
     
     bool cart_ram_enable;
     uint8_t rom_ram_mode;
-    uint8_t rtc[5];
-    
+    //uint8_t rtc[5];
+    uint32_t rtc_unix;
+    Rtc * rtc;
     
     void mbc1_write(uint16_t addr, uint8_t data);
     void mbc3_write(uint16_t addr, uint8_t data);
@@ -60,7 +68,7 @@ public:
     uint8_t read(uint16_t addr);
     void write(uint16_t addr, uint8_t data);
     
-    
+    uint8_t status();
     void get_title(char * title);
 };
 
