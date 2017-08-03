@@ -64,9 +64,6 @@ void PPU::write_vram(uint16_t addr, uint8_t data){
 }
 
 uint8_t PPU::read(uint16_t addr){
-    if ((addr & 0xE000) == 0x8000) {
-        return read_vram(addr - 0x8000);
-    }
     switch (addr) {
         case 0xFF40: return LCDC;
         case 0xFF41: return (STAT & 0x7C) | ((uint8_t)lyc_int <<2) | (mode & 0x3) | 0x80;
@@ -86,10 +83,6 @@ uint8_t PPU::read(uint16_t addr){
 }
 
 void PPU::write(uint16_t addr, uint8_t data){
-    if ((addr & 0xE000) == 0x8000) {
-        write_vram(addr - 0x8000, data);
-        return;
-    }
     switch (addr) {
         case 0xFF40:{
             if (!DISPLAY_ENABLE() && (data & 0x80) ) {

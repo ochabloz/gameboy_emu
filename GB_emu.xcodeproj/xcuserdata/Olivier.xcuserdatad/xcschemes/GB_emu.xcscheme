@@ -68,7 +68,7 @@
          </CommandLineArgument>
          <CommandLineArgument
             argument = "-b /Users/Olivier/Dropbox/Coding/gameboy/emu/gb_bios.bin"
-            isEnabled = "YES">
+            isEnabled = "NO">
          </CommandLineArgument>
          <CommandLineArgument
             argument = "-s 3"

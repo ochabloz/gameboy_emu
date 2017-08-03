@@ -78,13 +78,14 @@ class PPU {
     
     void do_line(void);
     void update_palette(uint8_t P_REG, uint32_t * palette);
-    uint8_t read_vram(uint16_t addr);
-    void write_vram(uint16_t addr, uint8_t data);
+    
 public:
     PPU(uint8_t gb_mode);
     uint8_t run(uint32_t cycles);
     uint8_t read(uint16_t addr);
     void write(uint16_t addr, uint8_t data);
+    uint8_t read_vram(uint16_t addr);
+    void write_vram(uint16_t addr, uint8_t data);
     SDL_Surface * get_screen();
     void set_palette(uint32_t col0, uint32_t col1, uint32_t col2, uint32_t col3);
     bool screen_complete;

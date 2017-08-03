@@ -67,7 +67,7 @@ uint8_t Memory_map::read(uint16_t addr){
         return cart->read(addr);
     }
     else if(addr <= 0x9FFF){ // Video RAM address space
-        return ppu->read(addr);
+        return ppu->read_vram(addr - 0x8000);
     }
     else if(addr >= 0xA000 && addr <= 0xBFFF){ // External RAM address space
         return cart->read(addr);
@@ -117,7 +117,7 @@ void Memory_map::write(uint16_t addr, uint8_t data){
         cart->write(addr, data);
     }
     else if(addr >= 0x8000 && addr <= 0x9FFF){ // Video RAM address space
-        ppu->write(addr, data);
+        ppu->write_vram(addr - 0x8000, data);
     }
     else if(addr >= 0xA000 && addr < 0xC000){ // External RAM address space
         cart->write(addr, data);
