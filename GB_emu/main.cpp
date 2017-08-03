@@ -1,3 +1,4 @@
+
 //
 //  main.cpp
 //  GB_emu
@@ -68,9 +69,42 @@ int main(int argc, char * const argv[]) {
         printf("the cartridge header doesn't match the checksum\n");
         return EXIT_SUCCESS;
     }
-    //The window we'll be rendering to
+    if(cart.status() == 0xFF){
+        printf("wrong rom file\n");
+        return EXIT_FAILURE;
+    }
+    
+    // initialize gameboy peripherals
+    
+    PPU ppu(cart.status());
+    APU apu;
+    Memory_map *memory;
+    Cpu * processor;
+    if(boot_rom == nullptr){
+        memory = new Memory_map(&cart, &ppu, &apu);
+        processor = new Cpu(memory, false);
+    }
+    else{
+        memory = new Memory_map(&cart, &ppu, &apu, boot_rom);
+        processor = new Cpu(memory, true);
+    }
+    
+    // initialise audio
+    
+    static SDL_AudioSpec audio_spec;
+    audio_spec.format = AUDIO_S16;
+    audio_spec.callback = audio_callback;
+    audio_spec.userdata = &apu;
+    audio_spec.freq = 44100;
+    audio_spec.samples = 2048;
+    if (SDL_OpenAudio(&audio_spec, NULL) < 0) {
+        fprintf(stderr, "Cannot open audio: %s", SDL_GetError());
+        return EXIT_FAILURE;
+    }
+    
+    // Initialize Screen
+    
     SDL_Window* window = NULL;
-    //The surface contained by the window
     SDL_Surface* screenSurface = NULL;
     
     //Initialize SDL
@@ -86,37 +120,11 @@ int main(int argc, char * const argv[]) {
                               ((fullscreen) ? SDL_WINDOW_FULLSCREEN_DESKTOP : 0)
                               );
     
-    //Get window surface
     screenSurface = SDL_GetWindowSurface(window);
     
     
     uint32_t time = SDL_GetTicks();
     bool quit = false;
-    PPU ppu;
-    APU apu;
-    Memory_map *memory;
-    Cpu * processor;
-    if(boot_rom == nullptr){
-        memory = new Memory_map(&cart, &ppu, &apu);
-        processor = new Cpu(memory, false);
-    }
-    else{
-        memory = new Memory_map(&cart, &ppu, &apu, boot_rom);
-        processor = new Cpu(memory, true);
-    }
-    
-    // initialise audio
-    static SDL_AudioSpec audio_spec;
-    audio_spec.format = AUDIO_S16;
-    audio_spec.callback = audio_callback;
-    audio_spec.userdata = &apu;
-    audio_spec.freq = 44100;
-    audio_spec.samples = 2048;
-    if (SDL_OpenAudio(&audio_spec, NULL) < 0) {
-        fprintf(stderr, "Cannot open audio: %s", SDL_GetError());
-        return EXIT_FAILURE;
-    }
-    
     
     uint64_t cycles = 0;
     SDL_PauseAudio(0);

@@ -9,12 +9,13 @@
 #include "Cart.hpp"
 #include <string>
 
-Cart::Cart(const char * file_path){
+Cart::Cart(const char * file_path): rtc(nullptr), ram_size(0){
     std::ifstream file(file_path, std::ios::binary);
     rom = std::vector<char>(std::istreambuf_iterator<char>(file),
                                std::istreambuf_iterator<char>());
     file.close();
-    if(rom.size() == 0){
+    if(rom.size() < 0x150){
+        gb_mode = 0xFF;
         return;
     }
     cart_ram_enable = false;
@@ -218,7 +219,7 @@ void Cart::mbc3_write(uint16_t addr, uint8_t data){
         {
             if (ram_bank > 7) {
                 rtc->write((time_rtc)(ram_bank - 8), data);
-                printf("wrote 0x%02x in rtc[0x%02x]\n", data, ram_bank-8);
+                //printf("wrote 0x%02x in rtc[0x%02x]\n", data, ram_bank-8);
             }
             else{
                 ram[(ram_bank * 0x2000) + (addr - 0xA000)] = data;
@@ -260,10 +261,14 @@ void Cart::get_title(char *title){
 }
 
 // check header checksum of the cartridge
+// return FF when file empty or doesn't exists
 // return 0 for wrong checksum
 // return 1 for GB
 // return 2 for GBC
 uint8_t Cart::status(){
+    if (gb_mode == 0xFF) {
+        return 0xFF;
+    }
     uint8_t checksum = 0;
     for (int i = 0x134; i <= 0x14c; i++) {
         checksum = checksum - rom[i] - 1;
