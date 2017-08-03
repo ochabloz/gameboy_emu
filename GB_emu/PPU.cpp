@@ -38,12 +38,12 @@
 
 #define MAP_COLOR(X) SDL_MapRGBA(screen->format,(X & 0xff0000)>>16, (X & 0xff00)>>8,X & 0xff, 0xff)
 
-PPU::PPU():
-    screen_complete(false), LCDC(0x91), STAT(0x81),
+PPU::PPU(uint8_t gb_mode):
+    screen_complete(false), LCDC(0x91), STAT(0x81), gb_mode(gb_mode),
     screen(SDL_CreateRGBSurface(0, 160, 144, 32, 0, 0, 0, 0)),
     global_palette{MAP_COLOR(COLOR0), MAP_COLOR(COLOR1), MAP_COLOR(COLOR2), MAP_COLOR(COLOR3)}{
     write(0xFF47, 0xE4); // BGP default value
-    
+    SCX = SCY = 0;
     LY = 0x00;
     current_line = 154;
     line_type = LINE_T_LAST;
