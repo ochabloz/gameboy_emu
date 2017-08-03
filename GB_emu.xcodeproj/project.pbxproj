@@ -8,6 +8,7 @@
 
 /* Begin PBXBuildFile section */
 		09241E2F1E7FDA9900F381EB /* Cart.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 09241E2D1E7FDA9900F381EB /* Cart.cpp */; };
+		093F84C71F31D68D009ADF89 /* rtc.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 093F84C51F31D68D009ADF89 /* rtc.cpp */; };
 		098587301E6555E10028288F /* main.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 0985872F1E6555E10028288F /* main.cpp */; };
 		098587381E65592B0028288F /* Memory_map.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 098587361E65592B0028288F /* Memory_map.cpp */; };
 		0985873B1E686A910028288F /* Cpu.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 098587391E686A910028288F /* Cpu.cpp */; };
@@ -31,6 +32,8 @@
 /* Begin PBXFileReference section */
 		09241E2D1E7FDA9900F381EB /* Cart.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = Cart.cpp; sourceTree = "<group>"; };
 		09241E2E1E7FDA9900F381EB /* Cart.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; path = Cart.hpp; sourceTree = "<group>"; };
+		093F84C51F31D68D009ADF89 /* rtc.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = rtc.cpp; sourceTree = "<group>"; };
+		093F84C61F31D68D009ADF89 /* rtc.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; path = rtc.hpp; sourceTree = "<group>"; };
 		0985872C1E6555E10028288F /* GB_emu */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = GB_emu; sourceTree = BUILT_PRODUCTS_DIR; };
 		0985872F1E6555E10028288F /* main.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = main.cpp; sourceTree = "<group>"; };
 		098587361E65592B0028288F /* Memory_map.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = Memory_map.cpp; sourceTree = "<group>"; };
@@ -87,6 +90,8 @@
 				0985873A1E686A910028288F /* Cpu.hpp */,
 				09AA7C841E967CDC00AB2BB1 /* APU.cpp */,
 				09AA7C851E967CDC00AB2BB1 /* APU.hpp */,
+				093F84C51F31D68D009ADF89 /* rtc.cpp */,
+				093F84C61F31D68D009ADF89 /* rtc.hpp */,
 			);
 			path = GB_emu;
 			sourceTree = "<group>";
@@ -162,6 +167,7 @@
 				098587301E6555E10028288F /* main.cpp in Sources */,
 				098587381E65592B0028288F /* Memory_map.cpp in Sources */,
 				09241E2F1E7FDA9900F381EB /* Cart.cpp in Sources */,
+				093F84C71F31D68D009ADF89 /* rtc.cpp in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

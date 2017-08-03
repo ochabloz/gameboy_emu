@@ -362,57 +362,59 @@ void PPU::do_line(){
         }
     }
     
-    
-    int nb_sprites = 0; // Keep track of how many sprites are rendered on the line since a maximum of 10 is allowed per line.
+    /* SPRITES RENDERING */
+    if(!SPRITE_ENABLE()){
+        return;
+    }
+    // Keep track of how many sprites are rendered on the line since a maximum of 10 is allowed per line.
+    int nb_sprites = 0;
     int8_t priority[160] = {0};
-    if(SPRITE_ENABLE()){
-        for (int i = 0; i < 40; i++) {
-            if (oam[i].X < (160 + 8) && oam[i].X != 0 && oam[i].Y < (144 + 16) && oam[i].Y != 0){
-                uint8_t res = 8 - (oam[i].Y - 8 - LY);
-                if ((res < 8 && !SPRITE_SIZE()) || (res < 16 && SPRITE_SIZE())) {
-                    nb_sprites++;
-                    
-                    // Load pixels from VRAM
-                    uint8_t j;
-                    if (SPRITE_Y_FLIP(oam[i].attribute)) {
-                        j = 7 - (LY - (oam[i].Y - 16));
-                    }
-                    else{
-                        j = 8 - ((oam[i].Y) - (LY + 8));
-                    }
-                    uint8_t sp_line0 = vram[(oam[i].tile_nb << 4) + j*2];
-                    uint8_t sp_line1 = vram[(oam[i].tile_nb << 4) + (j * 2)+ 1];
-                    
-                    // Load corresponding palette
-                    uint32_t * SPAL = (SPRITE_PALETTE(oam[i].attribute)) ? ob1_palette : ob0_palette;
-                    
-                    
-                    for (int pix_x = 0; pix_x < 8; pix_x++) {
-                        uint8_t x = oam[i].X + pix_x - 8;
-                        if (x < 160) {
-                            uint8_t order = (SPRITE_X_FLIP(oam[i].attribute)) ? 0 + pix_x : 7 - pix_x;
-                            uint8_t color = ((sp_line1 >> order & 1) << 1) | (sp_line0 >> order & 1);
-                            // color 0 is discarded
-                            if(color && (priority[x] == 0 || priority[x] > oam[i].X)){
-                                if(SPRITE_PRIORITY(oam[i].attribute)){ // BG priority
-                                    uint32_t pix = ((uint32_t *)screen->pixels)[LY * 160 + x];
-                                    if(pix == bg_palette[0]){
-                                        ((uint32_t *)screen->pixels)[LY * 160 + x] = SPAL[color];
-                                        priority[x] = oam[i].X;
-                                    }
-                                }
-                                else{ // sprite priority over BG
+    for (int i = 0; i < 40; i++) {
+        if (oam[i].X < (160 + 8) && oam[i].X != 0 && oam[i].Y < (144 + 16) && oam[i].Y != 0){
+            uint8_t res = 8 - (oam[i].Y - 8 - LY);
+            if ((res < 8 && !SPRITE_SIZE()) || (res < 16 && SPRITE_SIZE())) {
+                nb_sprites++;
+                
+                // Load pixels from VRAM
+                uint8_t j;
+                if (SPRITE_Y_FLIP(oam[i].attribute)) {
+                    j = 7 - (LY - (oam[i].Y - 16));
+                }
+                else{
+                    j = 8 - ((oam[i].Y) - (LY + 8));
+                }
+                uint8_t sp_line0 = vram[(oam[i].tile_nb << 4) + j*2];
+                uint8_t sp_line1 = vram[(oam[i].tile_nb << 4) + (j * 2)+ 1];
+                
+                // Load corresponding palette
+                uint32_t * SPAL = (SPRITE_PALETTE(oam[i].attribute)) ? ob1_palette : ob0_palette;
+                
+                
+                for (int pix_x = 0; pix_x < 8; pix_x++){
+                    uint8_t x = oam[i].X + pix_x - 8;
+                    if (x < 160) {
+                        uint8_t order = (SPRITE_X_FLIP(oam[i].attribute)) ? 0 + pix_x : 7 - pix_x;
+                        uint8_t color = ((sp_line1 >> order & 1) << 1) | (sp_line0 >> order & 1);
+                        // color 0 is discarded
+                        if(color && (priority[x] == 0 || priority[x] > oam[i].X)){
+                            if(SPRITE_PRIORITY(oam[i].attribute)){ // BG priority
+                                uint32_t pix = ((uint32_t *)screen->pixels)[LY * 160 + x];
+                                if(pix == bg_palette[0]){
                                     ((uint32_t *)screen->pixels)[LY * 160 + x] = SPAL[color];
                                     priority[x] = oam[i].X;
                                 }
+                            }
+                            else{ // sprite priority over BG
+                                ((uint32_t *)screen->pixels)[LY * 160 + x] = SPAL[color];
+                                priority[x] = oam[i].X;
                             }
                         }
                     }
                 }
             }
-            if(nb_sprites == 10){
-                break;
-            }
+        }
+        if(nb_sprites == 10){
+            break;
         }
     }
 }
