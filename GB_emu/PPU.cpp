@@ -52,27 +52,44 @@ PPU::PPU():
     vblank = 0;
     hblank = 0;
     lyc_int = 0;
+    vram_bank = 0;
 };
 
+uint8_t PPU::read_vram(uint16_t addr){
+    return vram[addr + (0x2000 * vram_bank)];
+}
+
+void PPU::write_vram(uint16_t addr, uint8_t data){
+    vram[addr + (0x2000 * vram_bank)] = data;
+}
+
 uint8_t PPU::read(uint16_t addr){
+    if ((addr & 0xE000) == 0x8000) {
+        return read_vram(addr - 0x8000);
+    }
     switch (addr) {
-        case 0xFF40: return LCDC; break;
-        case 0xFF41: return (STAT & 0x7C) | ((uint8_t)lyc_int <<2) | (mode & 0x3) | 0x80; break;
-        case 0xFF42: return SCY; break;
-        case 0xFF43: return SCX; break;
-        case 0xFF44: return (DISPLAY_ENABLE()) ? (uint8_t)LY : 0x00; break;
-        case 0xFF45: return LYC; break;
+        case 0xFF40: return LCDC;
+        case 0xFF41: return (STAT & 0x7C) | ((uint8_t)lyc_int <<2) | (mode & 0x3) | 0x80;
+        case 0xFF42: return SCY;
+        case 0xFF43: return SCX;
+        case 0xFF44: return (DISPLAY_ENABLE()) ? (uint8_t)LY : 0x00;
+        case 0xFF45: return LYC;
         /* case 0xFF46: return DMA; break; WRITE ONLY */
-        case 0xFF47: return BGP; break;
-        case 0xFF48: return OBP0; break;
-        case 0xFF49: return OBP1; break;
-        case 0xFF4A: return WY; break;
-        case 0xFF4B: return WX; break;
-        default: return 0xFF; break;
+        case 0xFF47: return BGP;
+        case 0xFF48: return OBP0;
+        case 0xFF49: return OBP1;
+        case 0xFF4A: return WY;
+        case 0xFF4B: return WX;
+        case 0xFF4F: return vram_bank;
+        default: return 0xFF;
     }
 }
 
 void PPU::write(uint16_t addr, uint8_t data){
+    if ((addr & 0xE000) == 0x8000) {
+        write_vram(addr - 0x8000, data);
+        return;
+    }
     switch (addr) {
         case 0xFF40:{
             if (!DISPLAY_ENABLE() && (data & 0x80) ) {
@@ -110,6 +127,7 @@ void PPU::write(uint16_t addr, uint8_t data){
         }
         case 0xFF4A: WY = data; break;
         case 0xFF4B: WX = data; break;
+        case 0xFF4F: vram_bank = (gb_mode == 2) ? data & 0x01 : 0; // CGB only
         default: break;
     }
 }
