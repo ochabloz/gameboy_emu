@@ -182,10 +182,6 @@ void Cart::mbc5_write(uint16_t addr, uint8_t data){
     else if(addr >= 0xA000 && addr < 0xC000){
         ram[(ram_bank * 0x2000) + (addr - 0xA000)] = data;
     }
-    else{
-        printf("Unknown cart write : [%4X] = %X\n", addr, data);
-        
-    }
 }
 
 void Cart::mbc3_write(uint16_t addr, uint8_t data){
@@ -224,8 +220,8 @@ void Cart::mbc3_write(uint16_t addr, uint8_t data){
             else{
                 ram[(ram_bank * 0x2000) + (addr - 0xA000)] = data;
             }
-        }
             break;
+        }
             
         default:
             break;
