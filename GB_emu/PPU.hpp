@@ -76,7 +76,7 @@ class PPU {
     uint8_t vram_bank;
     
     
-    void do_line(void);
+    void do_line(uint8_t line_num);
     void update_palette(uint8_t P_REG, uint32_t * palette);
     
 public:

@@ -69,7 +69,7 @@ uint8_t PPU::read(uint16_t addr){
         case 0xFF41: return (STAT & 0x7C) | ((uint8_t)lyc_int <<2) | (mode & 0x3) | 0x80;
         case 0xFF42: return SCY;
         case 0xFF43: return SCX;
-        case 0xFF44: return (DISPLAY_ENABLE()) ? (uint8_t)LY : 0x00;
+        case 0xFF44: return (DISPLAY_ENABLE()) ? (uint8_t)LY: 0x00;
         case 0xFF45: return LYC;
         /* case 0xFF46: return DMA; break; WRITE ONLY */
         case 0xFF47: return BGP;
@@ -187,7 +187,6 @@ uint8_t PPU::run(uint32_t cycles){
             case LINE_T_FIRST:
             {
                 if (next_mode == 2){
-                    do_line();
                     cycles_until_next_mode += 80;
                     next_mode = 3;
                 }
@@ -221,8 +220,7 @@ uint8_t PPU::run(uint32_t cycles){
                     line_type = (current_line < 144) ? LINE_T_NORMAL : LINE_T_VBLANK;
                 }
                 else if (next_mode == 0){
-                    LY++;
-                    do_line(); // do line should return the number of sprites rendered
+                    do_line(LY++); // do line should return the number of sprites rendered
                     cycles_until_next_mode += 4;
                     next_mode = 2;
                 }
@@ -236,6 +234,7 @@ uint8_t PPU::run(uint32_t cycles){
                     next_mode = 1;
                     
                     if(LY == 0x90){
+                        do_line(LY - 1);
                         ret = DISPLAY_ENABLE(); // request V-BLANK interrupt if the display is enabled
                         screen_complete = true;
                     }
@@ -262,50 +261,20 @@ uint8_t PPU::run(uint32_t cycles){
     }
     return ret;
 }
-/*
-uint8_t PPU::run(uint32_t cycles){
-    y_refresh += cycles;
-    uint8_t ret = 0;
-    if(y_refresh >= 452){
-        LY++;
-        y_refresh -= 452;
-        if(LY < 0x90){
-            do_line();
-        }
-        if(LY == 0x90){
-            ret = DISPLAY_ENABLE(); // request V-BLANK interrupt if the display is enabled
-            screen_complete = true;
-        }
-        if(LY == LYC && DISPLAY_ENABLE()){
-            STAT |= 1 << 2;
-            if (STAT_LYC_INT()) {
-                ret |= 0x1 << 1;   // request LCD STAT interrupt
-            }
-        }
-        else{
-            STAT &= ~(1 << 2);
-        }
-    }
-    if(LY > 153){
-        LY = 0;
-    }
-    return ret;
-}
-*/
 
 
-void PPU::do_line(){
+void PPU::do_line(uint8_t line_num){
     if (!DISPLAY_ENABLE()) {
         // when display is off, fill the line with color 0
         for (int i = 0; i < (160); i++) {
-            ((uint32_t *)screen->pixels)[LY * 160 + i] = global_palette[0];
+            ((uint32_t *)screen->pixels)[line_num * 160 + i] = global_palette[0];
         }
         return;
     }
     int32_t x = 0;
     
     for (int i = 0; i < 21; i++) { // 20 Tiles per line + 1 if there is an offset
-        uint16_t tile_number = (((LY+ SCY) / 8) & 0x1F) * 0x20 + ((SCX / 8 + i) & 0x1F);
+        uint16_t tile_number = (((line_num+ SCY) / 8) & 0x1F) * 0x20 + ((SCX / 8 + i) & 0x1F);
         
         uint16_t Tile_addr;
         if (BG_TILE_DISP_SEL()) {
@@ -321,8 +290,8 @@ void PPU::do_line(){
         else{
             Tile_addr <<= 4;
         }
-        uint8_t data  = vram[Tile_addr + ((LY+SCY) % 8) *2];
-        uint8_t data2 = vram[Tile_addr + (((LY+SCY) % 8)* 2)+ 1];
+        uint8_t data  = vram[Tile_addr + ((line_num + SCY) % 8) *2];
+        uint8_t data2 = vram[Tile_addr + (((line_num + SCY) % 8)* 2)+ 1];
         
         uint8_t pix_offset = SCX % 8;
         
@@ -330,7 +299,7 @@ void PPU::do_line(){
             uint8_t x_pos = x + k - pix_offset;
             if(x_pos < 160){
                 uint8_t color = ((data2 >> (7-k) & 1) << 1)| (data >> (7 - k) & 1);
-                ((uint32_t *)screen->pixels)[LY * 160 + x_pos] = bg_palette[color];
+                ((uint32_t *)screen->pixels)[line_num * 160 + x_pos] = bg_palette[color];
             }
         }
         x += 8;
@@ -338,18 +307,13 @@ void PPU::do_line(){
 
     
     x = 0;
-    if (WIN_DISP_ENABLE() && LY >= WY) {
+    if (WIN_DISP_ENABLE() && line_num >= WY) {
         for (int pos_x = 0; pos_x < 160; pos_x +=8) {
             if (pos_x+7 >= (WX)) {
-                uint16_t tile_number = (((LY- WY) / 8) & 0x1F) * 0x20 + (((pos_x - (WX-7)) / 8 ) & 0x1F);
+                uint16_t tile_number = (((line_num - WY) / 8) & 0x1F) * 0x20 + (((pos_x - (WX-7)) / 8 ) & 0x1F);
                 
-                uint16_t Tile_addr;
-                if (WIN_TILE_SEL()) {
-                    Tile_addr = vram[0x1C00 + tile_number];
-                }
-                else{
-                    Tile_addr = vram[0x1800 + tile_number];
-                }
+                uint16_t Tile_addr = vram[(WIN_TILE_SEL() ? 0x1C00 : 0x1800) + tile_number];
+
                 
                 if (BG_WIN_DATA_SEL() == 0) {
                     Tile_addr =  (Tile_addr < 0x80) ? (Tile_addr << 4) + 0x1000 : Tile_addr << 4;
@@ -357,8 +321,8 @@ void PPU::do_line(){
                 else{
                     Tile_addr <<= 4;
                 }
-                uint8_t data  = vram[Tile_addr + ((LY+WY) % 8) *2];
-                uint8_t data2 = vram[Tile_addr + (((LY+WY) % 8)* 2)+ 1];
+                uint8_t data  = vram[Tile_addr + ((line_num + WY) % 8) *2];
+                uint8_t data2 = vram[Tile_addr + (((line_num + WY) % 8)* 2)+ 1];
                 
                 uint8_t pix_offset = (WX-7) % 8;
                 
@@ -366,7 +330,7 @@ void PPU::do_line(){
                     uint8_t x_pos = pos_x + k - pix_offset;
                     if(x_pos < 160){
                         uint8_t color = ((data2 >> (7-k) & 1) << 1)| (data >> (7 - k) & 1);
-                        ((uint32_t *)screen->pixels)[LY * 160 + x_pos] = bg_palette[color];
+                        ((uint32_t *)screen->pixels)[line_num * 160 + x_pos] = bg_palette[color];
                     }
                 }
             }
@@ -382,17 +346,17 @@ void PPU::do_line(){
     int8_t priority[160] = {0};
     for (int i = 0; i < 40; i++) {
         if (oam[i].X < (160 + 8) && oam[i].X != 0 && oam[i].Y < (144 + 16) && oam[i].Y != 0){
-            uint8_t res = 8 - (oam[i].Y - 8 - LY);
+            uint8_t res = 8 - (oam[i].Y - 8 - line_num);
             if ((res < 8 && !SPRITE_SIZE()) || (res < 16 && SPRITE_SIZE())) {
                 nb_sprites++;
                 
                 // Load pixels from VRAM
                 uint8_t j;
                 if (SPRITE_Y_FLIP(oam[i].attribute)) {
-                    j = 7 - (LY - (oam[i].Y - 16));
+                    j = 7 - (line_num - (oam[i].Y - 16));
                 }
                 else{
-                    j = 8 - ((oam[i].Y) - (LY + 8));
+                    j = 8 - ((oam[i].Y) - (line_num + 8));
                 }
                 uint8_t sp_line0 = vram[(oam[i].tile_nb << 4) + j*2];
                 uint8_t sp_line1 = vram[(oam[i].tile_nb << 4) + (j * 2)+ 1];
@@ -409,14 +373,14 @@ void PPU::do_line(){
                         // color 0 is discarded
                         if(color && (priority[x] == 0 || priority[x] > oam[i].X)){
                             if(SPRITE_PRIORITY(oam[i].attribute)){ // BG priority
-                                uint32_t pix = ((uint32_t *)screen->pixels)[LY * 160 + x];
+                                uint32_t pix = ((uint32_t *)screen->pixels)[line_num * 160 + x];
                                 if(pix == bg_palette[0]){
-                                    ((uint32_t *)screen->pixels)[LY * 160 + x] = SPAL[color];
+                                    ((uint32_t *)screen->pixels)[line_num * 160 + x] = SPAL[color];
                                     priority[x] = oam[i].X;
                                 }
                             }
                             else{ // sprite priority over BG
-                                ((uint32_t *)screen->pixels)[LY * 160 + x] = SPAL[color];
+                                ((uint32_t *)screen->pixels)[line_num * 160 + x] = SPAL[color];
                                 priority[x] = oam[i].X;
                             }
                         }
