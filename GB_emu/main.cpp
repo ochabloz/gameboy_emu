@@ -43,11 +43,12 @@ int main(int argc, char * const argv[]) {
                 fullscreen = true;
                 break;
             case 's':
-                if (atof(optarg)) {
+                if (atof(optarg) > 0.1) {
                     screen_scale = atof(optarg);
                     screen_width = 160.0 * screen_scale;
                     screen_height = 144.0 * screen_scale;
                 }
+                else printf("-s %s is not a valid argument\n", optarg);
                 break;
             case 'r':
                 cart_name = optarg;
@@ -67,7 +68,7 @@ int main(int argc, char * const argv[]) {
     Cart cart(cart_name);
     if(!cart.status()){
         printf("the cartridge header doesn't match the checksum\n");
-        return EXIT_SUCCESS;
+        //return EXIT_SUCCESS;
     }
     if(cart.status() == 0xFF){
         printf("wrong rom file\n");
