@@ -321,8 +321,9 @@ void PPU::do_line(uint8_t line_num){
                 else{
                     Tile_addr <<= 4;
                 }
-                uint8_t data  = vram[Tile_addr + ((line_num + WY) % 8) *2];
-                uint8_t data2 = vram[Tile_addr + (((line_num + WY) % 8)* 2)+ 1];
+				uint8_t tile_line = ((line_num - WY) % 8) * 2;
+                uint8_t data  = vram[Tile_addr + tile_line];
+                uint8_t data2 = vram[Tile_addr + tile_line + 1];
                 
                 uint8_t pix_offset = (WX-7) % 8;
                 
