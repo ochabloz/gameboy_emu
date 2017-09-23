@@ -308,9 +308,9 @@ void PPU::do_line(uint8_t line_num){
     
     x = 0;
     if (WIN_DISP_ENABLE() && line_num >= WY) {
-        for (int pos_x = 0; pos_x < 160; pos_x +=8) {
-            if (pos_x+7 >= (WX)) {
-                uint16_t tile_number = (((line_num - WY) / 8) & 0x1F) * 0x20 + (((pos_x - (WX-7)) / 8 ) & 0x1F);
+        for (int pos_x = 0; pos_x < 168; pos_x +=8) {
+            if (pos_x >= (WX)) {
+                uint16_t tile_number = (((line_num - WY) / 8) & 0x1F) * 0x20 + (pos_x - WX - 7) / 8;
                 
                 uint16_t Tile_addr = vram[(WIN_TILE_SEL() ? 0x1C00 : 0x1800) + tile_number];
 
@@ -325,11 +325,11 @@ void PPU::do_line(uint8_t line_num){
                 uint8_t data  = vram[Tile_addr + tile_line];
                 uint8_t data2 = vram[Tile_addr + tile_line + 1];
                 
-                uint8_t pix_offset = (WX-7) % 8;
+                uint8_t pix_offset = ((WX) % 8) +7;
                 
                 for(int k = 0; k< 8; k++){
-                    uint8_t x_pos = pos_x + k - pix_offset;
-                    if(x_pos < 160){
+                    int x_pos = pos_x + k - pix_offset;
+                    if(x_pos < 160 && x_pos >= 0){
                         uint8_t color = ((data2 >> (7-k) & 1) << 1)| (data >> (7 - k) & 1);
                         ((uint32_t *)screen->pixels)[line_num * 160 + x_pos] = bg_palette[color];
                     }
