@@ -345,7 +345,8 @@ void PPU::do_line(uint8_t line_num){
                 // Load pixels from VRAM
                 uint8_t j;
                 if (SPRITE_Y_FLIP(oam[i].attribute)) {
-                    j = 7 - (line_num - (oam[i].Y - 16));
+					uint8_t line_offset = SPRITE_SIZE() ? 15 : 7;
+					j = line_offset - (line_num - (oam[i].Y - 16));
                 }
                 else{
                     j = 8 - ((oam[i].Y) - (line_num + 8));
