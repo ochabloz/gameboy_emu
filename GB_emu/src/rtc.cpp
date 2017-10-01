@@ -10,6 +10,7 @@
 #include <string>
 #include <fstream>
 #include <vector>
+#include <time.h>
 
 Rtc::Rtc(const char * basepath){
     std::string path_rom = std::string(basepath);
