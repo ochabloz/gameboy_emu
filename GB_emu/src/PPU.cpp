@@ -276,20 +276,14 @@ void PPU::do_line(uint8_t line_num){
     for (int i = 0; i < 21; i++) { // 20 Tiles per line + 1 if there is an offset
         uint16_t tile_number = (((line_num+ SCY) / 8) & 0x1F) * 0x20 + ((SCX / 8 + i) & 0x1F);
         
-        uint16_t Tile_addr;
-        if (BG_TILE_DISP_SEL()) {
-             Tile_addr = vram[0x1C00 + tile_number];
-        }
-        else{
-            Tile_addr = vram[0x1800 + tile_number];
-        }
-        
+		uint16_t Tile_addr = vram[(BG_TILE_DISP_SEL() ? 0x1C00 : 0x1800) + tile_number];
         if (BG_WIN_DATA_SEL() == 0) {
             Tile_addr =  (Tile_addr < 0x80) ? (Tile_addr << 4) + 0x1000 : Tile_addr << 4;
         }
         else{
             Tile_addr <<= 4;
         }
+
         uint8_t data  = vram[Tile_addr + ((line_num + SCY) % 8) *2];
         uint8_t data2 = vram[Tile_addr + (((line_num + SCY) % 8)* 2)+ 1];
         
