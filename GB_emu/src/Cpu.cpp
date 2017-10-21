@@ -24,12 +24,13 @@ using namespace std;
 #define check_bit(x, reg) do{SF_Z(((reg) & (0x1 << (x))) == 0); SF_H(1); SF_N(0);}while(0)
 
 Cpu::Cpu(Memory_map *m, bool dirty_boot):
-SP(0xfffe), A(0x11), B(0x00), C(0x13), D(0x00), E(0xd8), H(0x01), L(0x4d),
-IME(0), timer_DIV(0xABCC), halted(false), timer_TMA(0x00), timer_TIMA(0x00), timer_TCRL(0xF8),
-IE(0x00), IF(0x01){
+    SP(0xfffe), A(0x11), B(0x00), C(0x13), D(0x00), E(0xd8), H(0x01), L(0x4d),
+    timer_DIV(0xABCC), timer_TIMA(0x00), timer_TMA(0x00), timer_TCRL(0xF8),
+    halted(false),
+    IME(0), IF(0x01), IE(0x00){
     PC = (dirty_boot) ? 0x00 : 0x100;
     writeF(0xB0);
-    
+
     mem = m;
 #ifdef TRACE
     myfile.open ("/Users/Olivier/Dropbox/Coding/gameboy/emu/gb_emu.log", ios::out);
@@ -66,7 +67,7 @@ void Cpu::write_HL_pointer(uint8_t data){
 
 inline uint8_t Cpu::read_mem(uint16_t addr){
     cycle += 4;
-    
+
     // catches io ctrls for timer and interrupt
     request_interrupt(mem->sync_cycle(cycle - mem_cycle));
     mem_cycle = cycle;
@@ -110,7 +111,7 @@ inline void Cpu::write_mem(uint16_t addr, uint8_t data){
         case 0xFF07: timer_TCRL = 0xF8 | (data & 0x07); break;
         case 0xFF0F: IF = data; break;
         case 0xFFFF: IE = data; break;
-            
+
         default:
             mem->write(addr, data);
             break;
@@ -144,9 +145,9 @@ uint8_t Cpu::run(){
             }
         }
     }
-    
 
-    
+
+
     if (IME_delay) { // IE instruction is taken into account after the next instruction
         IME = 1;
         IME_delay = 0;
@@ -177,9 +178,9 @@ uint8_t Cpu::run(){
 
     switch (opcode) {
         case 0x00: break; // NOP
-        
+
         case 0x07: RLC_Handler(&A); break;
-        
+
         case 0x08:
         {   // LD [##], SP
             uint16_t addr = read_PC_mem();
@@ -189,21 +190,21 @@ uint8_t Cpu::run(){
             break;
         }
         case 0x0F: RRC_Handler(&A); break;
-            
+
         case 0x17: RL_handler(&A); break;
         case 0x1F: RR_handler(&A); SF_Z(0); break;  // RRA
         case 0x27: daa_handler(); break;
         case 0x2F: A = ~A; SF_N(1); SF_H(1); break; // CPL
-        
+
         case 0x01: ld_nn_Handler(&B, &C); break;
-        
+
         case 0x10: /* TODO: STOP HANDLING */ PC++; break;
-        
+
         case 0x11: ld_nn_Handler(&D, &E); break;
         case 0x21: ld_nn_Handler(&H, &L); break;
         case 0x31: ld_nn_Handler((uint8_t*)&SP + 1 , (uint8_t*)&SP); break;
         case 0x32: ldd_hla_Handler(); break;
-        
+
         case 0x34:
         {   // HL++
             uint8_t tmp = readHL() + 1;
@@ -211,11 +212,11 @@ uint8_t Cpu::run(){
             SF_Z(tmp == 0); SF_N(0); SF_H(!(tmp & 0xF));
             break;
         }
-        
+
         case 0x3A: ldd_ahl_Handler(); break;
-            
+
         case 0x3F: flag_c ^= true; SF_N(0); SF_H(0); break;
-            
+
         case 0x06: ld_n_Handler(&B, read_PC_mem()); break;
         case 0x0E: ld_n_Handler(&C, read_PC_mem()); break;
         case 0x16: ld_n_Handler(&D, read_PC_mem()); break;
@@ -282,9 +283,9 @@ uint8_t Cpu::run(){
         case 0x6C: ld_n_Handler(&L, H); break;
         case 0x6D: ld_n_Handler(&L, L); break;
         case 0x6E: ld_n_Handler(&L, read_mem(REG(H,L))); break;
-        
+
         case 0x76: halted = (IF & IE & 0x1F) == 0; break;
-            
+
         case 0x80: add(B); break;
         case 0x81: add(C); break;
         case 0x82: add(D); break;
@@ -294,7 +295,7 @@ uint8_t Cpu::run(){
         case 0x86: add(readHL()); break;
         case 0x87: add(A); break;
         case 0xC6: add(read_PC_mem()); break;
-        
+
         case 0x88: adc(B); break;
         case 0x89: adc(C); break;
         case 0x8A: adc(D); break;
@@ -304,16 +305,16 @@ uint8_t Cpu::run(){
         case 0x8E: adc(readHL()); break;
         case 0x8F: adc(A); break;
         case 0xCE: adc(read_PC_mem()); break;
-        
-        
+
+
         case 0x09: add16bits(&H, &L, &B, &C); break;
         case 0x19: add16bits(&H, &L, &D, &E); break;
         case 0x29: add16bits(&H, &L, &H, &L); break;
         case 0x39: add16bits(&H, &L, ((uint8_t*)&SP) + 1, ((uint8_t*)&SP)); break;
-        
+
         case 0x2A: ld_inc(); break;
         case 0x22: ld_hlinc(); break;
-            
+
         case 0x3C: A++; SF_Z(A== 0); SF_N(0); SF_H(!(A & 0xF)); break;
         case 0x04: B++; SF_Z(B== 0); SF_N(0); SF_H(!(B & 0xF)); break;
         case 0x0C: C++; SF_Z(C== 0); SF_N(0); SF_H(!(C & 0xF)); break;
@@ -321,7 +322,7 @@ uint8_t Cpu::run(){
         case 0x1C: E++; SF_Z(E== 0); SF_N(0); SF_H(!(E & 0xF)); break;
         case 0x24: H++; SF_Z(H== 0); SF_N(0); SF_H(!(H & 0xF)); break;
         case 0x2C: L++; SF_Z(L== 0); SF_N(0); SF_H(!(L & 0xF)); break;
-        
+
 
         case 0x77: write_mem(REG(H,L), A); break;
         case 0x70: write_mem(REG(H,L), B); break;
@@ -331,17 +332,17 @@ uint8_t Cpu::run(){
         case 0x74: write_mem(REG(H,L), H); break;
         case 0x75: write_mem(REG(H,L), L); break;
         case 0x36: write_mem(REG(H,L), read_PC_mem()); break;
-            
+
         case 0x02: write_mem(REG(B,C), A); break;
         case 0x12: write_mem(REG(D,E), A); break;
-        
+
         case 0xEA: write_mem(read_PC_mem() | (read_PC_mem() << 8), A); break;
-            
+
         case 0xE0: write_mem(0xFF00 + read_PC_mem(), A); break;
         case 0xE2: write_mem(0xFF00 + C, A); break;
         case 0xF0: A = read_mem(0xFF00 + read_PC_mem()); break;
         case 0xF2: A = read_mem(0xFF00 + C); break;
-            
+
         case 0x3D: dec(&A); break;
         case 0x05: dec(&B); break;
         case 0x0D: dec(&C); break;
@@ -350,12 +351,12 @@ uint8_t Cpu::run(){
         case 0x25: dec(&H); break;
         case 0x2D: dec(&L); break;
         case 0x35: dec_pointer(); break;
-        
+
         case 0x03: inc_nn(&B, &C); break;
         case 0x13: inc_nn(&D, &E); break;
         case 0x23: inc_nn(&H, &L); break;
         case 0x33: SP++; cycle += 4; break;
-            
+
         case 0x0B: dec_nn(&B, &C); break;
         case 0x1B: dec_nn(&D, &E); break;
         case 0x2B: dec_nn(&H, &L); break;
@@ -370,7 +371,7 @@ uint8_t Cpu::run(){
         case 0x96: sub(readHL()); break;
         case 0x97: sub(A); break;
         case 0xD6: sub(read_PC_mem()); break;
-        
+
         case 0x98: sbc(B); break;
         case 0x99: sbc(C); break;
         case 0x9A: sbc(D); break;
@@ -380,7 +381,7 @@ uint8_t Cpu::run(){
         case 0x9E: sbc(readHL()); break;
         case 0x9F: sbc(A); break;
         case 0xDE: sbc(read_PC_mem()); break;
-            
+
         case 0xA0: A &= B; FLAGS(A==0, 0, 1, 0); break;
         case 0xA1: A &= C; FLAGS(A==0, 0, 1, 0); break;
         case 0xA2: A &= D; FLAGS(A==0, 0, 1, 0); break;
@@ -390,7 +391,7 @@ uint8_t Cpu::run(){
         case 0xA6: A &= readHL(); FLAGS(A==0, 0, 1, 0); break;
         case 0xA7: A &= A; FLAGS(A==0, 0, 1, 0); break;
         case 0xE6: A &= read_PC_mem(); FLAGS(A==0, 0, 1, 0); break;
-        
+
         case 0xB7: or_Handler(A); break;
         case 0xB0: or_Handler(B); break;
         case 0xB1: or_Handler(C); break;
@@ -400,7 +401,7 @@ uint8_t Cpu::run(){
         case 0xB5: or_Handler(L); break;
         case 0xB6: or_Handler(read_mem(REG(H,L))); break;
         case 0xF6: or_Handler(read_PC_mem()); break;
-            
+
         case 0xA8: xor_Handler(B); break;
         case 0xA9: xor_Handler(C); break;
         case 0xAA: xor_Handler(D); break;
@@ -410,7 +411,7 @@ uint8_t Cpu::run(){
         case 0xAE: xor_Handler(read_mem(REG(H,L))); break;
         case 0xAF: xor_Handler(A); break;
         case 0xEE: xor_Handler(read_PC_mem()); break;
-        
+
         case 0xB8: compareA(B); break;
         case 0xB9: compareA(C); break;
         case 0xBA: compareA(D); break;
@@ -420,7 +421,7 @@ uint8_t Cpu::run(){
         case 0xBE: compareA(readHL()); break;
         case 0xBF: compareA(A); break;
         case 0xFE: compareA(read_PC_mem()); break;
-            
+
         case 0x18:
         {
             int8_t f_pc = (int8_t)read_PC_mem();
@@ -430,29 +431,29 @@ uint8_t Cpu::run(){
         }
         case 0xC3: JP_nn_Handler(); break;
         case 0xE9: PC = REG(H, L); break; // Jump to address contained in HL.
-            
+
         case 0x20: jump_cond(!RF_Z()); break; // NZ, Jump if Z flag is reset.
         case 0x28: jump_cond(RF_Z()); break; // Z, Jump if Z flag is set.
         case 0x30: jump_cond(!RF_C()); break; // NC, Jump if C flag is reset.
         case 0x38: jump_cond(RF_C()); break; // C, Jump if C flag is set.
-        
+
         case 0xC2: JP_nn_cond_Handler(!RF_Z()); break; // NZ, Jump if Z flag is reset.
         case 0xCA: JP_nn_cond_Handler(RF_Z()); break; // Z, Jump if Z flag is set.
         case 0xD2: JP_nn_cond_Handler(!RF_C()); break; // NC, Jump if C flag is reset.
         case 0xDA: JP_nn_cond_Handler(RF_C()); break; // C, Jump if C flag is set.
-        
+
         case 0xC4: call_cond_handler(!RF_Z()); break; // NZ, Jump if Z flag is reset.
         case 0xCC: call_cond_handler(RF_Z()); break; // Z, Jump if Z flag is set.
         case 0xD4: call_cond_handler(!RF_C()); break; // NC, Jump if C flag is reset.
         case 0xDC: call_cond_handler(RF_C()); break; // C, Jump if C flag is set.
-        
+
         case 0xC0: if(!RF_Z()) ret_handler(); cycle += 4; break;
         case 0xC8: if(RF_Z()) ret_handler(); cycle += 4; break;
         case 0xD0: if(!RF_C()) ret_handler(); cycle += 4; break;
         case 0xD8: if(RF_C()) ret_handler(); cycle += 4; break;
 
         case 0x37: SF_N(0); SF_H(0); SF_C(1); break; // SCF Set carry Flag
-        
+
         case 0xE8:
         {   // ADD SP, #
             int8_t ad = read_PC_mem();
@@ -469,18 +470,18 @@ uint8_t Cpu::run(){
         case 0xEF: resets_handler(0x28); break;
         case 0xF7: resets_handler(0x30); break;
         case 0xFF: resets_handler(0x38); break;
-        
+
         case 0xC9: ret_handler(); break;
         case 0xCD: call_handler(); break;
         case 0xf3: IME = 0; break;
         case 0xfB: IME_delay = 1; break;
         case 0xD9: IME = 1; ret_handler(); break;
-        
+
         case 0xF5: push_instruction(A, readF()); break;
         case 0xC5: push_instruction(B, C); break;
         case 0xD5: push_instruction(D, E); break;
         case 0xE5: push_instruction(H, L); break;
-            
+
         case 0xF1: {uint8_t tmpF; pop(&A, &tmpF); writeF(tmpF); break;}
         case 0xC1: pop(&B, &C); break;
         case 0xD1: pop(&D, &E); break;
@@ -488,7 +489,7 @@ uint8_t Cpu::run(){
 
         case 0xF8: ldhlsp_plus_n_handler(); break;
         case 0xF9: SP = (H << 8) | L; cycle += 4; break;
-            
+
         case 0xCB:
             {
                 uint8_t opcode_misc = read_PC_mem();
@@ -501,7 +502,7 @@ uint8_t Cpu::run(){
                     case 0x05: RLC_Handler(&L); SF_Z(L == 0); break;
                     case 0x06:{ uint8_t tmp = readHL(); RLC_Handler(&tmp); writeHL(tmp);SF_Z(tmp == 0);  break;}
                     case 0x07: RLC_Handler(&A); SF_Z(A == 0); break;
-                    
+
                     case 0x08: RRC_Handler(&B); SF_Z(B == 0); break;
                     case 0x09: RRC_Handler(&C); SF_Z(C == 0); break;
                     case 0x0A: RRC_Handler(&D); SF_Z(D == 0); break;
@@ -510,7 +511,7 @@ uint8_t Cpu::run(){
                     case 0x0D: RRC_Handler(&L); SF_Z(L == 0); break;
                     case 0x0E:{ uint8_t tmp = readHL(); RRC_Handler(&tmp); writeHL(tmp); SF_Z(tmp == 0); break;}
                     case 0x0F: RRC_Handler(&A); SF_Z(A == 0); break;
-                    
+
                     case 0x10: RL_handler(&B); SF_Z(B == 0); break;
                     case 0x11: RL_handler(&C); SF_Z(C == 0); break;
                     case 0x12: RL_handler(&D); SF_Z(D == 0); break;
@@ -519,7 +520,7 @@ uint8_t Cpu::run(){
                     case 0x15: RL_handler(&L); SF_Z(L == 0); break;
                     case 0x16:{ uint8_t tmp = readHL(); RL_handler(&tmp); writeHL(tmp); SF_Z(tmp == 0); break;}
                     case 0x17: RL_handler(&A); SF_Z(A == 0); break;
-                    
+
                     case 0x18: RR_handler(&B); SF_Z(B == 0); break;
                     case 0x19: RR_handler(&C); SF_Z(C == 0); break;
                     case 0x1A: RR_handler(&D); SF_Z(D == 0); break;
@@ -528,7 +529,7 @@ uint8_t Cpu::run(){
                     case 0x1D: RR_handler(&L); SF_Z(L == 0); break;
                     case 0x1E:{ uint8_t tmp = readHL(); RR_handler(&tmp); writeHL(tmp); SF_Z(tmp == 0); break;}
                     case 0x1F: RR_handler(&A); SF_Z(A == 0);  break;
-                    
+
                     case 0x37: swap(&A); break;
                     case 0x30: swap(&B); break;
                     case 0x31: swap(&C); break;
@@ -537,7 +538,7 @@ uint8_t Cpu::run(){
                     case 0x34: swap(&H); break;
                     case 0x35: swap(&L); break;
                     case 0x36: {uint8_t tmp = readHL(); swap(&tmp); writeHL(tmp); break;}
-                    
+
                     case 0x40: check_bit(0, B); break;
                     case 0x41: check_bit(0, C); break;
                     case 0x42: check_bit(0, D); break;
@@ -546,7 +547,7 @@ uint8_t Cpu::run(){
                     case 0x45: check_bit(0, L); break;
                     case 0x46: check_bit(0, readHL()); break;
                     case 0x47: check_bit(0, A); break;
-                        
+
                     case 0x48: check_bit(1, B); break;
                     case 0x49: check_bit(1, C); break;
                     case 0x4A: check_bit(1, D); break;
@@ -555,7 +556,7 @@ uint8_t Cpu::run(){
                     case 0x4D: check_bit(1, L); break;
                     case 0x4E: check_bit(1, readHL()); break;
                     case 0x4F: check_bit(1, A); break;
-                        
+
                     case 0x50: check_bit(2, B); break;
                     case 0x51: check_bit(2, C); break;
                     case 0x52: check_bit(2, D); break;
@@ -564,7 +565,7 @@ uint8_t Cpu::run(){
                     case 0x55: check_bit(2, L); break;
                     case 0x56: check_bit(2, readHL()); break;
                     case 0x57: check_bit(2, A); break;
-                    
+
                     case 0x58: check_bit(3, B); break;
                     case 0x59: check_bit(3, C); break;
                     case 0x5A: check_bit(3, D); break;
@@ -573,7 +574,7 @@ uint8_t Cpu::run(){
                     case 0x5D: check_bit(3, L); break;
                     case 0x5E: check_bit(3, readHL()); break;
                     case 0x5F: check_bit(3, A); break;
-                    
+
                     case 0x60: check_bit(4, B); break;
                     case 0x61: check_bit(4, C); break;
                     case 0x62: check_bit(4, D); break;
@@ -582,7 +583,7 @@ uint8_t Cpu::run(){
                     case 0x65: check_bit(4, L); break;
                     case 0x66: check_bit(4, readHL()); break;
                     case 0x67: check_bit(4, A); break;
-                        
+
                     case 0x68: check_bit(5, B); break;
                     case 0x69: check_bit(5, C); break;
                     case 0x6A: check_bit(5, D); break;
@@ -591,7 +592,7 @@ uint8_t Cpu::run(){
                     case 0x6D: check_bit(5, L); break;
                     case 0x6E: check_bit(5, readHL()); break;
                     case 0x6F: check_bit(5, A); break;
-                    
+
                     case 0x70: check_bit(6, B); break;
                     case 0x71: check_bit(6, C); break;
                     case 0x72: check_bit(6, D); break;
@@ -600,7 +601,7 @@ uint8_t Cpu::run(){
                     case 0x75: check_bit(6, L); break;
                     case 0x76: check_bit(6, readHL()); break;
                     case 0x77: check_bit(6, A); break;
-                        
+
                     case 0x78: check_bit(7, B); break;
                     case 0x79: check_bit(7, C); break;
                     case 0x7A: check_bit(7, D); break;
@@ -609,7 +610,7 @@ uint8_t Cpu::run(){
                     case 0x7D: check_bit(7, L); break;
                     case 0x7E: check_bit(7, readHL()); break;
                     case 0x7F: check_bit(7, A); break;
-                        
+
                     // RESET BIT POS : 10PP PRRR
                     // Where P is bit position and R is register
                     # define reset_bit(r, x)  r & ~(0x1 << x)
@@ -621,7 +622,7 @@ uint8_t Cpu::run(){
                     case 0x84: H = reset_bit(H, 0); break;
                     case 0x85: L = reset_bit(L, 0); break;
                     case 0x86: {uint8_t tmp = reset_bit(readHL(), 0); writeHL(tmp); break;}
-                        
+
                     case 0x8F: A = reset_bit(A, 1); break;
                     case 0x88: B = reset_bit(B, 1); break;
                     case 0x89: C = reset_bit(C, 1); break;
@@ -630,7 +631,7 @@ uint8_t Cpu::run(){
                     case 0x8C: H = reset_bit(H, 1); break;
                     case 0x8D: L = reset_bit(L, 1); break;
                     case 0x8E: {uint8_t tmp = reset_bit(readHL(), 1); writeHL(tmp); break;}
-                    
+
                     case 0x97: A = reset_bit(A, 2); break;
                     case 0x90: B = reset_bit(B, 2); break;
                     case 0x91: C = reset_bit(C, 2); break;
@@ -639,7 +640,7 @@ uint8_t Cpu::run(){
                     case 0x94: H = reset_bit(H, 2); break;
                     case 0x95: L = reset_bit(L, 2); break;
                     case 0x96: {uint8_t tmp = reset_bit(readHL(), 2); writeHL(tmp); break;}
-                        
+
                     case 0x9F: A = reset_bit(A, 3); break;
                     case 0x98: B = reset_bit(B, 3); break;
                     case 0x99: C = reset_bit(C, 3); break;
@@ -648,7 +649,7 @@ uint8_t Cpu::run(){
                     case 0x9C: H = reset_bit(H, 3); break;
                     case 0x9D: L = reset_bit(L, 3); break;
                     case 0x9E: {uint8_t tmp = reset_bit(readHL(), 3); writeHL(tmp); break;}
-                        
+
                     case 0xA7: A = reset_bit(A, 4); break;
                     case 0xA0: B = reset_bit(B, 4); break;
                     case 0xA1: C = reset_bit(C, 4); break;
@@ -657,7 +658,7 @@ uint8_t Cpu::run(){
                     case 0xA4: H = reset_bit(H, 4); break;
                     case 0xA5: L = reset_bit(L, 4); break;
                     case 0xA6: {uint8_t tmp = reset_bit(readHL(), 4); writeHL(tmp); break;}
-                        
+
                     case 0xAF: A = reset_bit(A, 5); break;
                     case 0xA8: B = reset_bit(B, 5); break;
                     case 0xA9: C = reset_bit(C, 5); break;
@@ -666,7 +667,7 @@ uint8_t Cpu::run(){
                     case 0xAC: H = reset_bit(H, 5); break;
                     case 0xAD: L = reset_bit(L, 5); break;
                     case 0xAE: {uint8_t tmp = reset_bit(readHL(), 5); writeHL(tmp); break;}
-                    
+
                     case 0xB7: A = reset_bit(A, 6); break;
                     case 0xB0: B = reset_bit(B, 6); break;
                     case 0xB1: C = reset_bit(C, 6); break;
@@ -675,7 +676,7 @@ uint8_t Cpu::run(){
                     case 0xB4: H = reset_bit(H, 6); break;
                     case 0xB5: L = reset_bit(L, 6); break;
                     case 0xB6: {uint8_t tmp = reset_bit(readHL(), 6); writeHL(tmp); break;}
-                        
+
                     case 0xBF: A = reset_bit(A, 7); break;
                     case 0xB8: B = reset_bit(B, 7); break;
                     case 0xB9: C = reset_bit(C, 7); break;
@@ -684,7 +685,7 @@ uint8_t Cpu::run(){
                     case 0xBC: H = reset_bit(H, 7); break;
                     case 0xBD: L = reset_bit(L, 7); break;
                     case 0xBE: {uint8_t tmp = reset_bit(readHL(), 7); writeHL(tmp); break;}
-                        
+
                         // SET BIT POS : 10PP PRRR
                         // Where P is bit position and R is register
 # define set_bit(r, x)  r | (0x1 << x)
@@ -696,7 +697,7 @@ uint8_t Cpu::run(){
                     case 0xC4: H = set_bit(H, 0); break;
                     case 0xC5: L = set_bit(L, 0); break;
                     case 0xC6: {uint8_t tmp = set_bit(readHL(), 0); writeHL(tmp); break;}
-                        
+
                     case 0xCF: A = set_bit(A, 1); break;
                     case 0xC8: B = set_bit(B, 1); break;
                     case 0xC9: C = set_bit(C, 1); break;
@@ -705,7 +706,7 @@ uint8_t Cpu::run(){
                     case 0xCC: H = set_bit(H, 1); break;
                     case 0xCD: L = set_bit(L, 1); break;
                     case 0xCE: {uint8_t tmp = set_bit(readHL(), 1); writeHL(tmp); break;}
-                        
+
                     case 0xD7: A = set_bit(A, 2); break;
                     case 0xD0: B = set_bit(B, 2); break;
                     case 0xD1: C = set_bit(C, 2); break;
@@ -714,7 +715,7 @@ uint8_t Cpu::run(){
                     case 0xD4: H = set_bit(H, 2); break;
                     case 0xD5: L = set_bit(L, 2); break;
                     case 0xD6: {uint8_t tmp = set_bit(readHL(), 2); writeHL(tmp); break;}
-                        
+
                     case 0xDF: A = set_bit(A, 3); break;
                     case 0xD8: B = set_bit(B, 3); break;
                     case 0xD9: C = set_bit(C, 3); break;
@@ -723,7 +724,7 @@ uint8_t Cpu::run(){
                     case 0xDC: H = set_bit(H, 3); break;
                     case 0xDD: L = set_bit(L, 3); break;
                     case 0xDE: {uint8_t tmp = set_bit(readHL(), 3); writeHL(tmp); break;}
-                        
+
                     case 0xE7: A = set_bit(A, 4); break;
                     case 0xE0: B = set_bit(B, 4); break;
                     case 0xE1: C = set_bit(C, 4); break;
@@ -732,7 +733,7 @@ uint8_t Cpu::run(){
                     case 0xE4: H = set_bit(H, 4); break;
                     case 0xE5: L = set_bit(L, 4); break;
                     case 0xE6: {uint8_t tmp = set_bit(readHL(), 4); writeHL(tmp); break;}
-                        
+
                     case 0xEF: A = set_bit(A, 5); break;
                     case 0xE8: B = set_bit(B, 5); break;
                     case 0xE9: C = set_bit(C, 5); break;
@@ -741,7 +742,7 @@ uint8_t Cpu::run(){
                     case 0xEC: H = set_bit(H, 5); break;
                     case 0xED: L = set_bit(L, 5); break;
                     case 0xEE: {uint8_t tmp = set_bit(readHL(), 5); writeHL(tmp); break;}
-                        
+
                     case 0xF7: A = set_bit(A, 6); break;
                     case 0xF0: B = set_bit(B, 6); break;
                     case 0xF1: C = set_bit(C, 6); break;
@@ -750,7 +751,7 @@ uint8_t Cpu::run(){
                     case 0xF4: H = set_bit(H, 6); break;
                     case 0xF5: L = set_bit(L, 6); break;
                     case 0xF6: {uint8_t tmp = set_bit(readHL(), 6); writeHL(tmp); break;}
-                        
+
                     case 0xFF: A = set_bit(A, 7); break;
                     case 0xF8: B = set_bit(B, 7); break;
                     case 0xF9: C = set_bit(C, 7); break;
@@ -759,7 +760,7 @@ uint8_t Cpu::run(){
                     case 0xFC: H = set_bit(H, 7); break;
                     case 0xFD: L = set_bit(L, 7); break;
                     case 0xFE: {uint8_t tmp = set_bit(readHL(), 7); writeHL(tmp); break;}
-                    
+
                     case 0x20: FLAGS(0, 0, 0, (B & 0x80) > 1); B <<= 1; SF_Z(B == 0); break;
                     case 0x21: FLAGS(0, 0, 0, (C & 0x80) > 1); C <<= 1; SF_Z(C == 0); break;
                     case 0x22: FLAGS(0, 0, 0, (D & 0x80) > 1); D <<= 1; SF_Z(D == 0); break;
@@ -775,7 +776,7 @@ uint8_t Cpu::run(){
                         break;
                     }
                     case 0x27: FLAGS(0, 0, 0, (A & 0x80) > 1); A <<= 1; SF_Z(A == 0); break;
-                        
+
                     // Arithmetic shift right (SRA)
                     case 0x28: SRA_handler(&B); break;
                     case 0x29: SRA_handler(&C); break;
@@ -803,10 +804,7 @@ uint8_t Cpu::run(){
         default:
             break;
     }
-    if(PC == 0x7aa0){
-        NULL;
-    }
-    
+
 #ifdef TRACE
     if (!halted) {
         myfile << " cycles :" << (uint16_t)cycle<< ";";
@@ -815,7 +813,7 @@ uint8_t Cpu::run(){
 #endif
     // sync memory with cpu
     request_interrupt(mem->sync_cycle(cycle - mem_cycle));
-    
+
     run_timer();
     return cycle;
 }
@@ -935,7 +933,7 @@ inline void Cpu::ld_inc(){ // A = [HL++]
     addr++;
     L = addr & 0xFF;
     H = (addr >> 8) & 0xFF;
-    
+
 }
 
 inline void Cpu::ld_hlinc(){ //[HL++] = A
@@ -944,7 +942,7 @@ inline void Cpu::ld_hlinc(){ //[HL++] = A
     addr++;
     L = addr & 0xFF;
     H = (addr >> 8) & 0xFF;
-    
+
 }
 
 inline void Cpu::compareA(uint8_t reg){

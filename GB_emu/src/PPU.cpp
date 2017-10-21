@@ -39,12 +39,12 @@
 
 
 PPU::PPU(uint8_t gb_mode, uint32_t * frame_buffer, uint32_t c0, uint32_t c1, uint32_t c2, uint32_t c3):
-    screen_complete(false), LCDC(0x91), STAT(0x81), gb_mode(gb_mode),
     screen(frame_buffer),
-    global_palette{c0, c1, c2, c3}{
+    LCDC(0x91), STAT(0x81), SCY(0), SCX(0), LY(0), LYC(0),
+    global_palette{c0, c1, c2, c3},
+    gb_mode(gb_mode),
+    screen_complete(false){
     write(0xFF47, 0xE4); // BGP default value
-    SCX = SCY = 0;
-    LY = 0x00;
     current_line = 154;
     line_type = LINE_T_LAST;
     cycles_until_next_mode = 80;

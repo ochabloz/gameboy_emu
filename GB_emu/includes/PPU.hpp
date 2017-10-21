@@ -48,7 +48,7 @@ class PPU {
     uint32_t next_mode;              // next ppu mode
     int cycles_until_next_mode; // number of cycles until ppu will change mode
     int line_type;
-    int current_line;
+    uint32_t current_line;
 
     uint32_t vblank;
     uint32_t hblank;

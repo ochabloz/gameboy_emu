@@ -39,11 +39,11 @@
 
 
 class Cart {
-    int rom_bank1;
+    uint32_t rom_bank1;
     int ram_bank;
     std::vector<char> rom;
     std::vector<char> ram;
-    std::string file_path_rom;        
+    std::string file_path_rom;
     char TITLE[0x10];
     uint32_t rom_size;
     uint8_t ram_size;
@@ -51,23 +51,23 @@ class Cart {
     uint8_t cart_type;
     uint8_t gb_mode;
     uint8_t super_gb;
-    
+
     bool cart_ram_enable;
     uint8_t rom_ram_mode;
     //uint8_t rtc[5];
     uint32_t rtc_unix;
     Rtc * rtc;
-    
+
     void mbc1_write(uint16_t addr, uint8_t data);
     void mbc3_write(uint16_t addr, uint8_t data);
     void mbc5_write(uint16_t addr, uint8_t data);
-    
+
 public:
     Cart(const char * file_path);
     ~Cart();
     uint8_t read(uint16_t addr);
     void write(uint16_t addr, uint8_t data);
-    
+
     uint8_t status();
     void get_title(char * title);
 };
