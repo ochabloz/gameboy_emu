@@ -14,7 +14,6 @@ SRC_DIR := GB_emu/src/
 
 OBJ_DIR := objs/
 SRC_FILES := $(wildcard $(SRC_DIR)*.cpp)
-SRC_FILES += $(wildcard $(SRC_DIR)*.c)
 OBJ_FILES := $(patsubst $(SRC_DIR)%.cpp,$(OBJ_DIR)%.o,$(SRC_FILES))
 
 OBJTST_DIR := objs/tests/
@@ -30,7 +29,7 @@ $(OBJ_DIR)%.o: $(SRC_DIR)%.c
 	$(CC) $(CFLAGS) $(CXXFLAGS) -c -o $@ $<
 
 # Additional compiled test program
-GB_emu: $(OBJ_FILES)
+GB_emu: $(OBJ_FILES) objs/argparse.o
 	$(CPP) -o $(OBJ_DIR)$@ $^ $(LDFLAGS)
 
 
