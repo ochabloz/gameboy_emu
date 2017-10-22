@@ -186,10 +186,7 @@ int main(int argc, char * argv[]) {
         }
 
         cycles = 0;
-        uint32_t delta = (SDL_GetTicks() - time);
-        if(delta < 14){
-            SDL_Delay(14 - delta);
-        }
+        
 
         //Apply the image stretched
         {
@@ -211,9 +208,12 @@ int main(int argc, char * argv[]) {
             SDL_RenderCopy(renderer, screen_texture, NULL, &stretchRect);
             SDL_RenderPresent(renderer);
             SDL_DestroyTexture(screen_texture);
-            //SDL_BlitScaled(screen, NULL, screenSurface, &stretchRect );
-            //SDL_UpdateWindowSurface(window);
         }
+
+		uint32_t delta = (SDL_GetTicks() - time);
+		if (delta < 16) {
+			SDL_Delay(16 - delta);
+		}
     }
     return EXIT_SUCCESS;
 }
