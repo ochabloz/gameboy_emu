@@ -76,10 +76,10 @@ inline uint8_t Cpu::read_mem(uint16_t addr){
         case 0xFF05:
         {
             switch (timer_TCRL & 0x3) {
-                case 0b00: return (uint8_t)timer_TIMA >> 10; break; // 18 bits timer
-                case 0b01: return (uint8_t)timer_TIMA >> 4; break; // 12 bits timer
-                case 0b10: return (uint8_t)timer_TIMA >> 6; break; // 14 bits timer
-                case 0b11: return (uint8_t)timer_TIMA >> 8; break; // 16 bits timer
+                case 0b00: return (uint8_t)(timer_TIMA >> 10); break; // 18 bits timer
+                case 0b01: return (uint8_t)(timer_TIMA >> 4); break; // 12 bits timer
+                case 0b10: return (uint8_t)(timer_TIMA >> 6); break; // 14 bits timer
+                case 0b11: return (uint8_t)(timer_TIMA >> 8); break; // 16 bits timer
             }
         }
         case 0xFF06: return timer_TMA;
@@ -240,7 +240,11 @@ uint8_t Cpu::run(){
         case 0x0A: ld_n_Handler(&A, read_mem(REG(B,C))); break;
         case 0x1A: ld_n_Handler(&A, read_mem(REG(D,E))); break;
         case 0x7E: ld_n_Handler(&A, read_mem(REG(H,L))); break;
-        case 0xFA: ld_n_Handler(&A, read_mem(read_PC_mem() |(read_PC_mem()<<8))); break;
+        case 0xFA:{
+            uint16_t addr = read_PC_mem();
+            addr |= read_PC_mem() << 8;
+            ld_n_Handler(&A, read_mem(addr));
+        } break;
         case 0x40: ld_n_Handler(&B, B); break;
         case 0x41: ld_n_Handler(&B, C); break;
         case 0x42: ld_n_Handler(&B, D); break;
@@ -336,7 +340,11 @@ uint8_t Cpu::run(){
         case 0x02: write_mem(REG(B,C), A); break;
         case 0x12: write_mem(REG(D,E), A); break;
 
-        case 0xEA: write_mem(read_PC_mem() | (read_PC_mem() << 8), A); break;
+        case 0xEA:{
+            uint16_t addr = read_PC_mem();
+            addr |= read_PC_mem() << 8;
+             write_mem(addr, A);
+        } break;
 
         case 0xE0: write_mem(0xFF00 + read_PC_mem(), A); break;
         case 0xE2: write_mem(0xFF00 + C, A); break;
@@ -1064,7 +1072,8 @@ inline void Cpu::RR_handler(uint8_t * reg){
 
 inline void Cpu::RL_handler(uint8_t * reg){
     uint8_t cflag = (*reg >> 7) & 0x01;
-    *reg = (*reg << 1) | RF_C();
+    *reg = *reg << 1;
+    *reg = RF_C() ? *reg | 1 : *reg;
     FLAGS(0, 0, 0, cflag);
 }
 
