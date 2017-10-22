@@ -51,7 +51,6 @@ int main(int argc, char * argv[]) {
     int screen_width = ceilf(160.0 * screen_scale);
     int screen_height = ceilf(144.0 * screen_scale);
 
-    bool fullscreen = false;
     bool disable_audio = true;
 
     SDL_Surface * screen;
@@ -59,6 +58,7 @@ int main(int argc, char * argv[]) {
     argparse_t parser = argparse_init(argc, (const char **)argv);
     const char * boot_rom  = argparse_get_opt(parser, 'b');
     const char * cart_name = argparse_get_positional(parser, 0);
+    bool fullscreen = (bool)argparse_get_long_opt(parser, "fullscreen");
     const char * scale = argparse_get_opt(parser, 's');
 
     if(scale != nullptr){
@@ -81,7 +81,7 @@ int main(int argc, char * argv[]) {
         //return EXIT_SUCCESS;
     }
     if(cart.status() == 0xFF){
-        printf("wrong rom file\n");
+        printf("The file provided as rom is not readable by the program. Exitting.\n");
         return EXIT_FAILURE;
     }
 
@@ -122,6 +122,8 @@ int main(int argc, char * argv[]) {
     // Initialize Screen
 
     SDL_Window* window = NULL;
+    SDL_Renderer * renderer = NULL;
+    SDL_Texture* screen_texture = NULL;
 
     //Initialize SDL
     if( SDL_Init(SDL_INIT_VIDEO | SDL_INIT_TIMER | SDL_INIT_AUDIO)< 0 ){
@@ -139,6 +141,7 @@ int main(int argc, char * argv[]) {
                               ((fullscreen) ? SDL_WINDOW_FULLSCREEN_DESKTOP : 0)
                               );
 
+    renderer = SDL_CreateRenderer(window, -1, 0);
 
     bool quit = false;
     uint64_t cycles = 0;
@@ -184,24 +187,32 @@ int main(int argc, char * argv[]) {
 
         cycles = 0;
         uint32_t delta = (SDL_GetTicks() - time);
-        if(delta < 13){
-            SDL_Delay(13 - delta);
+        if(delta < 14){
+            SDL_Delay(14 - delta);
         }
-        
+
         //Apply the image stretched
         {
+            screen_texture = SDL_CreateTextureFromSurface(renderer, screen);
             SDL_Rect stretchRect;
             stretchRect.y = 0;
             SDL_GetWindowSize(window, &stretchRect.w, &stretchRect.h);
-            SDL_Surface* screenSurface = SDL_GetWindowSurface(window);
-            float scale = floor(stretchRect.h / 140.0 * 10.0) / 10.0;
+            float scale = ((stretchRect.h / 144.0));
+			float scale_w = ((stretchRect.w / 160.0));
+			if (scale_w < scale) {
+				stretchRect.h = 144 * scale_w;
+				scale = scale_w;
+			}
             stretchRect.x = stretchRect.w;
             stretchRect.w = scale * 160.0;
             stretchRect.x = (stretchRect.x - stretchRect.w) / 2;
             stretchRect.x = (stretchRect.x < 0) ? 0 : stretchRect.x;
             ppu.get_screen();
-            SDL_BlitScaled(screen, NULL, screenSurface, &stretchRect );
-            SDL_UpdateWindowSurface(window);
+            SDL_RenderCopy(renderer, screen_texture, NULL, &stretchRect);
+            SDL_RenderPresent(renderer);
+            SDL_DestroyTexture(screen_texture);
+            //SDL_BlitScaled(screen, NULL, screenSurface, &stretchRect );
+            //SDL_UpdateWindowSurface(window);
         }
     }
     return EXIT_SUCCESS;
