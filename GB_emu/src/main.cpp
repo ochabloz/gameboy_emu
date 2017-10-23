@@ -9,6 +9,7 @@
 #include <stdlib.h>
 #include <iostream>
 #include <vector>
+#include <chrono>
 
 #include "Cart.hpp"
 #include "Memory_map.hpp"
@@ -146,9 +147,11 @@ int main(int argc, char * argv[]) {
     bool quit = false;
     uint64_t cycles = 0;
     SDL_PauseAudio(0);
+    float drift = 0;
 
     while(!quit){
-        uint32_t time = SDL_GetTicks();
+        //uint32_t time = SDL_GetTicks();
+        auto time = std::chrono::high_resolution_clock::now();
         while (!ppu.screen_complete) {
             cycles += processor->run();
         }
@@ -186,7 +189,7 @@ int main(int argc, char * argv[]) {
         }
 
         cycles = 0;
-        
+
 
         //Apply the image stretched
         {
@@ -195,11 +198,11 @@ int main(int argc, char * argv[]) {
             stretchRect.y = 0;
             SDL_GetWindowSize(window, &stretchRect.w, &stretchRect.h);
             float scale = ((stretchRect.h / 144.0));
-			float scale_w = ((stretchRect.w / 160.0));
-			if (scale_w < scale) {
-				stretchRect.h = 144 * scale_w;
-				scale = scale_w;
-			}
+            float scale_w = ((stretchRect.w / 160.0));
+            if (scale_w < scale) {
+            	stretchRect.h = 144 * scale_w;
+            	scale = scale_w;
+            }
             stretchRect.x = stretchRect.w;
             stretchRect.w = scale * 160.0;
             stretchRect.x = (stretchRect.x - stretchRect.w) / 2;
@@ -210,10 +213,18 @@ int main(int argc, char * argv[]) {
             SDL_DestroyTexture(screen_texture);
         }
 
-		uint32_t delta = (SDL_GetTicks() - time);
-		if (delta < 16) {
-			SDL_Delay(16 - delta);
-		}
+        auto time_after = std::chrono::high_resolution_clock::now();
+		uint32_t delta = std::chrono::duration_cast<std::chrono::milliseconds>(time_after - time).count();
+		delta -= floor(drift);
+		drift -= floor(drift);
+        if (delta < 16){
+            SDL_Delay(16 - delta);
+
+			time_after = std::chrono::high_resolution_clock::now();
+			delta = std::chrono::duration_cast<std::chrono::microseconds>(time_after - time).count();
+			float deltaf = delta / 1000.0;
+			drift += (16.57 - deltaf);
+        }
     }
     return EXIT_SUCCESS;
 }
