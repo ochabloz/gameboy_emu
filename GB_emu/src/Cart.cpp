@@ -7,7 +7,10 @@
 //
 
 #include "Cart.hpp"
-#include <string>
+extern "C"{
+    #include "utils.h"
+}
+#include <string.h>
 
 Cart::Cart(const char * file_path):  ram_size(0), rtc(nullptr){
     std::ifstream file(file_path, std::ios::binary);
@@ -52,9 +55,11 @@ Cart::Cart(const char * file_path):  ram_size(0), rtc(nullptr){
     }
     // When a cartridge contains ram, create or open a file with name "<rom_file>.sav"
     if (ram_size > 0) {
-        file_path_rom = std::string(file_path);
-        std::string sav_name = file_path_rom + ".sav";
-        std::ifstream sav_file (sav_name, std::ios::binary);
+        file_path_rom = (char*)malloc(strlen(file_path) + 1);
+        memcpy(file_path_rom, file_path, strlen(file_path) + 1);
+
+        file_path_rom = filename_replace_ext(file_path_rom, "sav");
+        std::ifstream sav_file (file_path_rom, std::ios::binary);
         std::vector<char> ram_tmp = std::vector<char>(std::istreambuf_iterator<char>(sav_file),
                           std::istreambuf_iterator<char>());
 
@@ -82,12 +87,10 @@ Cart::~Cart(){
         delete rtc;
     }
     if (ram_size > 0) {
-        std::string sav_name = file_path_rom + ".sav";
-        std::ofstream sav_file (sav_name, std::ios::binary);
+        std::ofstream sav_file (file_path_rom, std::ios::binary);
         sav_file.write(reinterpret_cast<char*>(&ram[0]), ram.size());
         sav_file.close();
     }
-
 }
 
 uint8_t Cart::read(uint16_t addr){
@@ -156,10 +159,7 @@ void Cart::mbc1_write(uint16_t addr, uint8_t data){
     else if(addr >= 0xA000 && addr < 0xC000 && ram_size > 0){
         ram[addr - 0xA000] = data;
     }
-    else{
-        printf("Unknown cart write : [%4X] = %X\n", addr, data);
-
-    }
+    // there is no effect when there is a write anywhere else
 }
 
 

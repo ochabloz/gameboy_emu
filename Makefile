@@ -29,7 +29,7 @@ $(OBJ_DIR)%.o: $(SRC_DIR)%.c
 	$(CC) $(CFLAGS) $(CXXFLAGS) -c -o $@ $<
 
 # Additional compiled test program
-GB_emu: $(OBJ_FILES) objs/argparse.o
+GB_emu: $(OBJ_FILES) objs/argparse.o  objs/utils.o
 	$(CPP) -o $(OBJ_DIR)$@ $^ $(LDFLAGS)
 
 
@@ -38,7 +38,7 @@ $(OBJTST_DIR)%.o: tests/%.c
 	$(CPP) $(CPPFLAGS) $(CXXFLAGS) -c -o $@ $<
 
 # Additional compiled test program
-test: $(TST_OBJ_FILES) objs/Cart.o objs/Cpu.o objs/Memory_map.o objs/PPU.o objs/rtc.o objs/APU.o objs/argparse.o
+test: $(TST_OBJ_FILES) objs/Cart.o objs/Cpu.o objs/Memory_map.o objs/PPU.o objs/rtc.o objs/APU.o objs/argparse.o objs/utils.o
 	$(CPP) -o $(OBJ_DIR)$@ $^ -lCppUTest
 	objs/test
 
