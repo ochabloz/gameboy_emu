@@ -29,3 +29,13 @@ TEST(test_utils, replace_with_no_extention){
     STRCMP_EQUAL("somefile.sav", rom_file);
     free(rom_file);
 }
+
+
+TEST(test_utils, replace_with_shorter_ext){
+    const char * cfile = "somefile.alongext";
+    char * rom_file = (char*)malloc(9);
+    memcpy(rom_file, cfile, 9);
+    rom_file = filename_replace_ext(rom_file, "sav");
+    STRCMP_EQUAL("somefile.sav", rom_file);
+    free(rom_file);
+}
