@@ -36,15 +36,15 @@
 #define LINE_T_VBLANK 2
 #define LINE_T_LAST   3
 
-#define MAP_COLOR(X) SDL_MapRGBA(screen->format,(X & 0xff0000)>>16, (X & 0xff00)>>8,X & 0xff, 0xff)
 
-PPU::PPU(uint8_t gb_mode):
-    screen_complete(false), LCDC(0x91), STAT(0x81), gb_mode(gb_mode),
-    screen(SDL_CreateRGBSurface(0, 160, 144, 32, 0, 0, 0, 0)),
-    global_palette{MAP_COLOR(COLOR0), MAP_COLOR(COLOR1), MAP_COLOR(COLOR2), MAP_COLOR(COLOR3)}{
+
+PPU::PPU(uint8_t gb_mode, uint32_t * frame_buffer, uint32_t c0, uint32_t c1, uint32_t c2, uint32_t c3):
+    screen(frame_buffer),
+    LCDC(0x91), STAT(0x81), SCY(0), SCX(0), LY(0), LYC(0),
+    global_palette{c0, c1, c2, c3},
+    gb_mode(gb_mode),
+    screen_complete(false){
     write(0xFF47, 0xE4); // BGP default value
-    SCX = SCY = 0;
-    LY = 0x00;
     current_line = 154;
     line_type = LINE_T_LAST;
     cycles_until_next_mode = 80;
@@ -151,10 +151,10 @@ uint8_t PPU::run(uint32_t cycles){
         }
         test_cycles += cycles; */
     }
-    
+
     cycles_until_next_mode -= cycles;
     if (cycles_until_next_mode <= 0) {
-        
+
         if (mode != 1 && next_mode == 1 && STAT_VBL_INT()) {
             ret |= 0x1 << 1;   // request LCD STAT interrupt
         }
@@ -164,15 +164,15 @@ uint8_t PPU::run(uint32_t cycles){
         if (mode != 2 && next_mode == 2 && STAT_OAM_INT()) {
             ret |= 0x1 << 1;   // request LCD STAT interrupt
         }
-        
-        
+
+
         mode = next_mode;
         switch (line_type) {
             case LINE_T_LAST:
             {
                 if (next_mode == 1) {
                     LY = 0;
-                    
+
                     cycles_until_next_mode += 452;
                     next_mode = 0;
                 }
@@ -232,7 +232,7 @@ uint8_t PPU::run(uint32_t cycles){
                     LY++;
                     cycles_until_next_mode += 4;
                     next_mode = 1;
-                    
+
                     if(LY == 0x90){
                         do_line(LY - 1);
                         ret = DISPLAY_ENABLE(); // request V-BLANK interrupt if the display is enabled
@@ -251,7 +251,7 @@ uint8_t PPU::run(uint32_t cycles){
                 }
                 break;
             }
-                
+
             default:
                 break;
         }
@@ -267,15 +267,15 @@ void PPU::do_line(uint8_t line_num){
     if (!DISPLAY_ENABLE()) {
         // when display is off, fill the line with color 0
         for (int i = 0; i < (160); i++) {
-            ((uint32_t *)screen->pixels)[line_num * 160 + i] = global_palette[0];
+            screen[line_num * 160 + i] = global_palette[0];
         }
         return;
     }
     int32_t x = 0;
-    
+
     for (int i = 0; i < 21; i++) { // 20 Tiles per line + 1 if there is an offset
         uint16_t tile_number = (((line_num+ SCY) / 8) & 0x1F) * 0x20 + ((SCX / 8 + i) & 0x1F);
-        
+
 		uint16_t Tile_addr = vram[(BG_TILE_DISP_SEL() ? 0x1C00 : 0x1800) + tile_number];
         if (BG_WIN_DATA_SEL() == 0) {
             Tile_addr =  (Tile_addr < 0x80) ? (Tile_addr << 4) + 0x1000 : Tile_addr << 4;
@@ -286,20 +286,20 @@ void PPU::do_line(uint8_t line_num){
 
         uint8_t data  = vram[Tile_addr + ((line_num + SCY) % 8) *2];
         uint8_t data2 = vram[Tile_addr + (((line_num + SCY) % 8)* 2)+ 1];
-        
+
         uint8_t pix_offset = SCX % 8;
-        
+
         for(int k = 0; k< 8; k++){
             uint8_t x_pos = x + k - pix_offset;
             if(x_pos < 160){
                 uint8_t color = ((data2 >> (7-k) & 1) << 1)| (data >> (7 - k) & 1);
-                ((uint32_t *)screen->pixels)[line_num * 160 + x_pos] = bg_palette[color];
+                screen[line_num * 160 + x_pos] = bg_palette[color];
             }
         }
         x += 8;
     }
 
-    
+
     x = 0;
     if (WIN_DISP_ENABLE() && line_num >= WY) {
 		for (int x_position = WX - 7; x_position < 168; x_position += 8) {
@@ -323,12 +323,12 @@ void PPU::do_line(uint8_t line_num){
 				int x = x_position + k;
 				if (x < 160 && x >= 0) {
 					uint8_t color = ((data2 >> (7 - k) & 1) << 1) | (data >> (7 - k) & 1);
-					((uint32_t *)screen->pixels)[line_num * 160 + x] = bg_palette[color];
+					screen[line_num * 160 + x] = bg_palette[color];
 				}
 			}
 		}
     }
-    
+
     /* SPRITES RENDERING */
     if(!SPRITE_ENABLE()){
         return;
@@ -341,7 +341,7 @@ void PPU::do_line(uint8_t line_num){
             uint8_t res = 8 - (oam[i].Y - 8 - line_num);
             if ((res < 8 && !SPRITE_SIZE()) || (res < 16 && SPRITE_SIZE())) {
                 nb_sprites++;
-                
+
                 // Load pixels from VRAM
                 uint8_t j;
                 if (SPRITE_Y_FLIP(oam[i].attribute)) {
@@ -353,11 +353,11 @@ void PPU::do_line(uint8_t line_num){
                 }
                 uint8_t sp_line0 = vram[(oam[i].tile_nb << 4) + j*2];
                 uint8_t sp_line1 = vram[(oam[i].tile_nb << 4) + (j * 2)+ 1];
-                
+
                 // Load corresponding palette
                 uint32_t * SPAL = (SPRITE_PALETTE(oam[i].attribute)) ? ob1_palette : ob0_palette;
-                
-                
+
+
                 for (int pix_x = 0; pix_x < 8; pix_x++){
                     uint8_t x = oam[i].X + pix_x - 8;
                     if (x < 160) {
@@ -366,14 +366,14 @@ void PPU::do_line(uint8_t line_num){
                         // color 0 is discarded
                         if(color && (priority[x] == 0 || priority[x] > oam[i].X)){
                             if(SPRITE_PRIORITY(oam[i].attribute)){ // BG priority
-                                uint32_t pix = ((uint32_t *)screen->pixels)[line_num * 160 + x];
+                                uint32_t pix = screen[line_num * 160 + x];
                                 if(pix == bg_palette[0]){
-                                    ((uint32_t *)screen->pixels)[line_num * 160 + x] = SPAL[color];
+                                    screen[line_num * 160 + x] = SPAL[color];
                                     priority[x] = oam[i].X;
                                 }
                             }
                             else{ // sprite priority over BG
-                                ((uint32_t *)screen->pixels)[line_num * 160 + x] = SPAL[color];
+                                screen[line_num * 160 + x] = SPAL[color];
                                 priority[x] = oam[i].X;
                             }
                         }
@@ -387,18 +387,18 @@ void PPU::do_line(uint8_t line_num){
     }
 }
 
-SDL_Surface * PPU::get_screen(){
+bool PPU::get_screen(){
     if (screen_complete) {
         screen_complete = false;
-        return screen;
+        return true;
     }
-    return (SDL_Surface*)nullptr;
+    return false;
 }
 
 
 void PPU::set_palette(uint32_t col0, uint32_t col1, uint32_t col2, uint32_t col3){
-    global_palette[0] = MAP_COLOR(col0);
-    global_palette[1] = MAP_COLOR(col1);
-    global_palette[2] = MAP_COLOR(col2);
-    global_palette[3] = MAP_COLOR(col3);
+    global_palette[0] = col0;
+    global_palette[1] = col1;
+    global_palette[2] = col2;
+    global_palette[3] = col3;
 }

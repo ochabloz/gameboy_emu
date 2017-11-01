@@ -7,14 +7,18 @@
 //
 
 #include "rtc.hpp"
-#include <string>
+extern "C"{
+    #include "utils.h"
+}
+#include <string.h>
 #include <fstream>
 #include <vector>
 #include <time.h>
 
 Rtc::Rtc(const char * basepath){
-    std::string path_rom = std::string(basepath);
-    rtc_filename = path_rom + ".rtc";
+    rtc_filename = (char *)malloc(strlen(basepath) + 1);
+    memcpy(rtc_filename, basepath, strlen(basepath) + 1);
+    rtc_filename = filename_replace_ext(rtc_filename, "rtc");
     std::ifstream rtc_file (rtc_filename, std::ios::binary);
     std::vector<char> rtc_tmp = std::vector<char>(std::istreambuf_iterator<char>(rtc_file),
                                                   std::istreambuf_iterator<char>());
@@ -59,10 +63,10 @@ uint8_t Rtc::convert_timestamp(time_rtc type, uint32_t timestamp){
         case minutes:
             return (timestamp / 60) % 60;
             break;
-            
+
         case hours:
             return (timestamp / 3600) % 24;
-            
+
         case days_low:
             return (uint8_t)(timestamp / (24 * 60 * 60));
             break;
@@ -85,15 +89,15 @@ uint8_t Rtc::read(time_rtc reg){
 
 void Rtc::write(time_rtc reg, uint8_t val){
     const static uint32_t multiplier[] = {1, 60, 3600, (24 * 60 * 60)};
-    
+
     uint32_t unix_time = (uint32_t)time(NULL) % (512 * 24 * 60 * 60);
     unix_time -= ref_time;
     if (reg == days_high) {
         ref_time += ((convert_timestamp(reg, unix_time) & 0x1) << 8) * (24 * 60 * 60);
         ref_time -= ((val & 0x1) << 8) * (24 * 60 * 60);
-        
+
         active = (val & (0x1 << 6)) ? false : true;
-        
+
         return;
     }
     ref_time += convert_timestamp(reg, unix_time) * multiplier[reg];

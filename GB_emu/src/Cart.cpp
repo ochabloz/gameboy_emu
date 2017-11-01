@@ -7,9 +7,12 @@
 //
 
 #include "Cart.hpp"
-#include <string>
+extern "C"{
+    #include "utils.h"
+}
+#include <string.h>
 
-Cart::Cart(const char * file_path): rtc(nullptr), ram_size(0){
+Cart::Cart(const char * file_path):  ram_size(0), rtc(nullptr){
     std::ifstream file(file_path, std::ios::binary);
     rom = std::vector<char>(std::istreambuf_iterator<char>(file),
                                std::istreambuf_iterator<char>());
@@ -19,14 +22,14 @@ Cart::Cart(const char * file_path): rtc(nullptr), ram_size(0){
         return;
     }
     cart_ram_enable = false;
-    
+
     for (int i = 0; i < 0x10; i++) {
         TITLE[i] = rom[0x134 + i];
     }
     cart_type = rom[0x147];
     gb_mode = rom[0x143];
     super_gb = rom[0x146];
-    
+
     switch (rom[0x148]) { // record the total number of rom banks
         case 0x00: rom_size = 2; break;
         case 0x01: rom_size = 4; break;
@@ -41,7 +44,7 @@ Cart::Cart(const char * file_path): rtc(nullptr), ram_size(0){
         case 0x54: rom_size = 96; break;
         default: break;
     }
-    
+
     switch (rom[0x149]) { // record the total number of ram banks
         case 0x00: ram_size = 0; break;
         case 0x01: ram_size = 1; break;
@@ -52,12 +55,14 @@ Cart::Cart(const char * file_path): rtc(nullptr), ram_size(0){
     }
     // When a cartridge contains ram, create or open a file with name "<rom_file>.sav"
     if (ram_size > 0) {
-        file_path_rom = std::string(file_path);
-        std::string sav_name = file_path_rom + ".sav";
-        std::ifstream sav_file (sav_name, std::ios::binary);
+        file_path_rom = (char*)malloc(strlen(file_path) + 1);
+        memcpy(file_path_rom, file_path, strlen(file_path) + 1);
+
+        file_path_rom = filename_replace_ext(file_path_rom, "sav");
+        std::ifstream sav_file (file_path_rom, std::ios::binary);
         std::vector<char> ram_tmp = std::vector<char>(std::istreambuf_iterator<char>(sav_file),
                           std::istreambuf_iterator<char>());
-        
+
         if (ram_tmp.size() == (ram_size * 0x2000)) {
             // size is ok.
             ram = ram_tmp;
@@ -66,12 +71,12 @@ Cart::Cart(const char * file_path): rtc(nullptr), ram_size(0){
             // size not ok. reseting...
             ram = std::vector<char>(ram_size * 0x2000, 0);
         }
-        
+
         if(cart_type == MBC3_RAM_TIM_BAT){
             rtc = new Rtc(file_path);
         }
     }
-    
+
     ram_bank  = 0;
     rom_bank1 = 1;
     rom_ram_mode = ROM_MODE;
@@ -82,12 +87,10 @@ Cart::~Cart(){
         delete rtc;
     }
     if (ram_size > 0) {
-        std::string sav_name = file_path_rom + ".sav";
-        std::ofstream sav_file (sav_name, std::ios::binary);
+        std::ofstream sav_file (file_path_rom, std::ios::binary);
         sav_file.write(reinterpret_cast<char*>(&ram[0]), ram.size());
         sav_file.close();
     }
-    
 }
 
 uint8_t Cart::read(uint16_t addr){
@@ -141,7 +144,7 @@ void Cart::mbc1_write(uint16_t addr, uint8_t data){
                 ram_bank = ((data & 0x3) <= (ram_size - 1)) ? data & 3 : ram_size - 1;
                 break;
             }
-        } 
+        }
     }
     else if(addr >= 0x6000 && addr < 0x8000){
         if ((data & 0x01) == RAM_MODE) {
@@ -156,10 +159,7 @@ void Cart::mbc1_write(uint16_t addr, uint8_t data){
     else if(addr >= 0xA000 && addr < 0xC000 && ram_size > 0){
         ram[addr - 0xA000] = data;
     }
-    else{
-        printf("Unknown cart write : [%4X] = %X\n", addr, data);
-        
-    }
+    // there is no effect when there is a write anywhere else
 }
 
 
@@ -171,11 +171,11 @@ void Cart::mbc5_write(uint16_t addr, uint8_t data){
         rom_bank1 = (data > (rom_size-1)) ? rom_size - 1 : data;
     }
     else if(addr >= 0x3000 && addr < 0x4000){
-    
+
         rom_bank1 = (data & 0x1) ? rom_bank1 | 0x100 : rom_bank1 & 0xFF;
         rom_bank1 |= (data & 0x3) << 5;
     }
-    
+
     else if(addr >= 0x4000 && addr < 0x6000){
         ram_bank = data;
     }
@@ -222,7 +222,7 @@ void Cart::mbc3_write(uint16_t addr, uint8_t data){
             }
             break;
         }
-            
+
         default:
             break;
     }
@@ -231,12 +231,12 @@ void Cart::mbc3_write(uint16_t addr, uint8_t data){
 void Cart::write(uint16_t addr, uint8_t data){
     switch (cart_type) {
         case ROM_ONLY: break;
-            
+
         case MBC1:
         case MBC1_RAM:
         case MBC1_RAM_BAT:
             mbc1_write(addr, data); break;
-        
+
         case MBC3_RAM_TIM_BAT:
             mbc3_write(addr, data);
             break;
