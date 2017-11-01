@@ -195,7 +195,7 @@ void Cart::mbc3_write(uint16_t addr, uint8_t data){
         case 0x2000:
         case 0x3000:
         { // ROM bank select
-            rom_bank1 = (!data) ? 0x1 : data;
+            rom_bank1 = (!data) ? 0x1 : 0x7f & data;
             break;
         }
         case 0x4000:
