@@ -1139,3 +1139,58 @@ inline void Cpu::run_timer(){
 inline void Cpu::request_interrupt(uint8_t INT){
     IF |= INT;
 }
+
+
+uint8_t * Cpu::serialize(uint32_t * size){
+    // first allocate the correct amount of Bytes necessary
+    *size = 23;
+    uint8_t * serialized_cpu = (uint8_t *)malloc(*size);
+    serialized_cpu[0] = (uint8_t)SP;
+    serialized_cpu[1] = (uint8_t)(SP >> 8);
+    serialized_cpu[2] = A;
+    serialized_cpu[3] = B;
+    serialized_cpu[4] = C;
+    serialized_cpu[5] = D;
+    serialized_cpu[6] = E;
+    serialized_cpu[7] = H;
+    serialized_cpu[8] = L;
+    serialized_cpu[9] = readF();
+    serialized_cpu[10] = (uint8_t)PC;
+    serialized_cpu[11] = (uint8_t)(PC >> 8);
+    serialized_cpu[12] = (uint8_t)timer_DIV;
+    serialized_cpu[13] = (uint8_t)(timer_DIV >> 8);
+    serialized_cpu[14] = timer_TIMA;
+    serialized_cpu[15] = timer_TCRL;
+    serialized_cpu[16] = halted;
+    serialized_cpu[17] = IME;
+    serialized_cpu[18] = IME_delay;
+    serialized_cpu[19] = IF;
+    serialized_cpu[20] = IE;
+    serialized_cpu[21] = cycle;
+    serialized_cpu[22] = mem_cycle;
+    return serialized_cpu;
+}
+
+int Cpu::unserialize(uint8_t * serialized_cpu){
+    SP = *((uint16_t*)serialized_cpu);
+    A = serialized_cpu[2];
+    B = serialized_cpu[3];
+    C = serialized_cpu[4];
+    D = serialized_cpu[5];
+    E = serialized_cpu[6];
+    H = serialized_cpu[7];
+    L = serialized_cpu[8];
+    writeF(serialized_cpu[9]);
+    PC =  *((uint16_t*)(serialized_cpu + 10));
+    timer_DIV = *((uint16_t*)(serialized_cpu + 12));
+    timer_TIMA = serialized_cpu[14];
+    timer_TCRL = serialized_cpu[15];
+    halted = serialized_cpu[16];
+    IME = serialized_cpu[17];
+    IME_delay = serialized_cpu[18];
+    IF = serialized_cpu[19];
+    IE = serialized_cpu[20];
+    cycle = serialized_cpu[21];
+    mem_cycle = serialized_cpu[22];
+    return 0;
+}

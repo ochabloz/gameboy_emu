@@ -41,25 +41,25 @@ class Cpu {
     uint8_t E;
     uint8_t H;
     uint8_t L;
-    
+
     //uint8_t F;
     bool flag_c;
     bool flag_h;
     bool flag_n;
     bool flag_z;
-    
+
     uint16_t timer_DIV;
     uint32_t timer_TIMA;
     uint8_t timer_TMA;
     uint8_t timer_TCRL;
-    
+
     bool halted;
-    
+
     uint8_t IME; /* Interrupt Master enable */
     uint8_t IF; /* Interrupt Request mapped to memory 0xFF0F */
     uint8_t IE; /* Interrupt Enable mapped to memory 0xFFFF  */
     uint8_t IME_delay;
-    
+
     Memory_map *mem;
     inline uint8_t readF();
     inline void writeF(uint8_t val);
@@ -69,7 +69,7 @@ class Cpu {
     void write_HL_pointer(uint8_t data);
     void push(uint8_t val);
     uint8_t pull();
-    
+
     // instruction handlers. all inline
     inline void call_handler();
     inline void call_cond_handler(uint8_t cond);
@@ -106,20 +106,23 @@ class Cpu {
     inline void SRL_handler(uint8_t *reg);
     inline void RLC_Handler(uint8_t * reg);
     inline void ldhlsp_plus_n_handler();
-    
+
     // misc
     std::ofstream myfile;
     inline void swap(uint8_t *reg);
-    
+
     inline void run_timer();
 public:
-    
+
     Cpu(Memory_map *m, bool dirty_boot);
     ~Cpu();
     uint8_t cycle;
     uint8_t mem_cycle;
     uint8_t run();
     inline void request_interrupt(uint8_t INT);
+
+    uint8_t * serialize(uint32_t * size);
+    int unserialize(uint8_t * data);
 };
 
 
