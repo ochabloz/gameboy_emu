@@ -72,14 +72,14 @@ int main(int argc, char * argv[]) {
     }
 
     if (cart_name == nullptr) {
-        printf("Usage : gb_emu romfile.gb\n");
+        printf("Usage : %s romfile.gb\n", argv[0]);
         return EXIT_SUCCESS;
     }
 
     Cart cart(cart_name);
     if(!cart.status()){
         printf("the cartridge header doesn't match the checksum\n");
-        //return EXIT_SUCCESS;
+        return EXIT_SUCCESS;
     }
     if(cart.status() == 0xFF){
         printf("The file provided as rom is not readable by the program. Exitting.\n");

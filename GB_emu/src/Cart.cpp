@@ -265,11 +265,11 @@ uint8_t Cart::status(){
     if (gb_mode == 0xFF) {
         return 0xFF;
     }
-    uint8_t checksum = 0;
-    for (int i = 0x134; i <= 0x14c; i++) {
-        checksum = checksum - rom[i] - 1;
+    uint8_t checksum = 0x19;
+    for (int i = 0x134; i <= 0x14d; i++) {
+        checksum += rom[i];
     }
-    if (checksum == rom[0x14D]) {
+    if (!checksum) {
         return (gb_mode == 0x80 || gb_mode == 0xC0) ? 0x2 : 0x1;
     }
     return 0x00;
