@@ -44,8 +44,8 @@ class PPU {
     uint32_t ob1_palette[4];
 
     // private variables
-    uint32_t mode;                   // mode in which the ppu is currently in
-    uint32_t next_mode;              // next ppu mode
+    uint32_t mode;              // mode in which the ppu is currently in
+    uint32_t next_mode;         // next ppu mode
     int cycles_until_next_mode; // number of cycles until ppu will change mode
     int line_type;
     uint32_t current_line;
@@ -73,8 +73,11 @@ public:
     void write_vram(uint16_t addr, uint8_t data);
     bool get_screen();
     void set_palette(uint32_t col0, uint32_t col1, uint32_t col2, uint32_t col3);
-    bool screen_complete;
 
+	uint8_t * serialize(uint32_t * size);
+	int unserialize(uint8_t * data);
+
+    bool screen_complete;
     struct OAM oam[40];
 };
 

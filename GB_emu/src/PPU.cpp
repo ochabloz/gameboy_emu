@@ -7,6 +7,8 @@
 //
 
 #include "PPU.hpp"
+#include <stdlib.h>
+#include <string.h>
 
 #define STAT_LYC_INT()  ((STAT>>6) & 0x01)
 #define STAT_OAM_INT()  ((STAT>>5) & 0x01)
@@ -144,12 +146,6 @@ uint8_t PPU::run(uint32_t cycles){
     uint8_t ret = 0;
     if (cycles) {
         lyc_int = 0;
-        /* if (LY != last_ly) {
-            printf("LY = %d, test_cycles = %d\n",last_ly, test_cycles);
-            last_ly = LY;
-            test_cycles = 0;
-        }
-        test_cycles += cycles; */
     }
 
     cycles_until_next_mode -= cycles;
@@ -401,4 +397,61 @@ void PPU::set_palette(uint32_t col0, uint32_t col1, uint32_t col2, uint32_t col3
     global_palette[1] = col1;
     global_palette[2] = col2;
     global_palette[3] = col3;
+}
+
+
+uint8_t * PPU::serialize(uint32_t * size) {
+	// first allocate the correct amount of Bytes necessary
+	*size = 0x4000 + 40 + 13 + 10 * sizeof(uint32_t) + 4 * sizeof(uint32_t) * 4;
+	uint8_t * serialized_ppu = (uint8_t *)malloc(*size);
+	memcpy(serialized_ppu, vram, 0x4000);
+	memcpy(serialized_ppu + 0x4000, oam, 40);
+	uint32_t ppu_pos = 0x4000 + 40;
+	serialized_ppu[ppu_pos++] = LCDC;
+	serialized_ppu[ppu_pos++] = STAT;
+	serialized_ppu[ppu_pos++] = SCY;
+	serialized_ppu[ppu_pos++] = SCX;
+	serialized_ppu[ppu_pos++] = LYC;
+	serialized_ppu[ppu_pos++] = BGP;
+	serialized_ppu[ppu_pos++] = OBP0;
+	serialized_ppu[ppu_pos++] = OBP1;
+	serialized_ppu[ppu_pos++] = WY;
+	serialized_ppu[ppu_pos++] = WX;
+	serialized_ppu[ppu_pos++] = gb_mode;
+
+	memcpy(serialized_ppu + ppu_pos, &LY, sizeof(uint32_t));
+	ppu_pos += sizeof(uint32_t);
+	memcpy(serialized_ppu + ppu_pos, global_palette, sizeof(uint32_t) * 4);
+	ppu_pos += sizeof(uint32_t) * 4;
+	memcpy(serialized_ppu + ppu_pos, bg_palette, sizeof(uint32_t) * 4);
+	ppu_pos += sizeof(uint32_t) * 4;
+	memcpy(serialized_ppu + ppu_pos, ob0_palette, sizeof(uint32_t) * 4);
+	ppu_pos += sizeof(uint32_t) * 4;
+	memcpy(serialized_ppu + ppu_pos, ob1_palette, sizeof(uint32_t) * 4);
+	ppu_pos += sizeof(uint32_t) * 4;
+	memcpy(serialized_ppu + ppu_pos, &mode, sizeof(uint32_t));
+	ppu_pos += sizeof(uint32_t);
+	memcpy(serialized_ppu + ppu_pos, &next_mode, sizeof(uint32_t));
+	ppu_pos += sizeof(uint32_t);
+	memcpy(serialized_ppu + ppu_pos, &current_line, sizeof(uint32_t));
+	ppu_pos += sizeof(uint32_t);
+	memcpy(serialized_ppu + ppu_pos, &cycles_until_next_mode, sizeof(uint32_t));
+	ppu_pos += sizeof(uint32_t);
+	memcpy(serialized_ppu + ppu_pos, &line_type, sizeof(uint32_t));
+	ppu_pos += sizeof(uint32_t);
+	memcpy(serialized_ppu + ppu_pos, &vblank, sizeof(uint32_t));
+	ppu_pos += sizeof(uint32_t);
+	memcpy(serialized_ppu + ppu_pos, &hblank, sizeof(uint32_t));
+	ppu_pos += sizeof(uint32_t);
+	memcpy(serialized_ppu + ppu_pos, &lyc_int, sizeof(uint32_t));
+	ppu_pos += sizeof(uint32_t);
+	memcpy(serialized_ppu + ppu_pos, &y_refresh, sizeof(uint32_t));
+	ppu_pos += sizeof(uint32_t);
+
+
+	return nullptr;
+}
+
+int PPU::unserialize(uint8_t * data) {
+	return 0;
 }
