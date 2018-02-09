@@ -60,6 +60,7 @@ int main(int argc, char * argv[]) {
     const char * boot_rom  = argparse_get_opt(parser, 'b');
     const char * cart_name = argparse_get_positional(parser, 0);
     bool fullscreen = (bool)argparse_get_long_opt(parser, "fullscreen");
+	bool disable_screen = (bool)argparse_get_long_opt(parser, "disable_screen");
     const char * scale = argparse_get_opt(parser, 's');
 
     if(scale != nullptr){
@@ -127,26 +128,29 @@ int main(int argc, char * argv[]) {
     SDL_Texture* screen_texture = NULL;
 
     //Initialize SDL
-    if( SDL_Init(SDL_INIT_VIDEO | SDL_INIT_TIMER | SDL_INIT_AUDIO)< 0 ){
-		fprintf(stderr, "Cannot init SDL: %s\n", SDL_GetError());
-        return EXIT_FAILURE;
-    }
-    char title[16];
-    cart.get_title(title);
-    window = SDL_CreateWindow(title,
-                              SDL_WINDOWPOS_CENTERED,
-                              SDL_WINDOWPOS_CENTERED,
-                              screen_width,
-                              screen_height,
-                              SDL_WINDOW_SHOWN | SDL_WINDOW_RESIZABLE |
-                              ((fullscreen) ? SDL_WINDOW_FULLSCREEN_DESKTOP : 0)
-                              );
+    if(!disable_screen){
+        if( SDL_Init(SDL_INIT_VIDEO | SDL_INIT_TIMER | SDL_INIT_AUDIO)< 0 ){
+    		fprintf(stderr, "Cannot init SDL: %s\n", SDL_GetError());
+            return EXIT_FAILURE;
+        }
+        char title[16];
+        cart.get_title(title);
+        window = SDL_CreateWindow(title,
+                                  SDL_WINDOWPOS_CENTERED,
+                                  SDL_WINDOWPOS_CENTERED,
+                                  screen_width,
+                                  screen_height,
+                                  SDL_WINDOW_SHOWN | SDL_WINDOW_RESIZABLE |
+                                  ((fullscreen) ? SDL_WINDOW_FULLSCREEN_DESKTOP : 0)
+                                  );
 
-    renderer = SDL_CreateRenderer(window, -1, 0);
+        renderer = SDL_CreateRenderer(window, -1, 0);
+        SDL_PauseAudio(0);
+    }
 
     bool quit = false;
     uint64_t cycles = 0;
-    SDL_PauseAudio(0);
+
     float drift = 0;
 
     while(!quit){
@@ -156,7 +160,7 @@ int main(int argc, char * argv[]) {
             cycles += processor->run();
         }
         SDL_Event evt;
-        while (SDL_PollEvent(&evt)) {
+        while (SDL_PollEvent(&evt) && !disable_screen) {
             switch (evt.type) {
                 case SDL_KEYUP:
                 case SDL_KEYDOWN:
@@ -182,7 +186,9 @@ int main(int argc, char * argv[]) {
                         memory->joypad &= ~(bit_pos);
                     break;
                 }
-                case SDL_QUIT: quit = true; break;
+                case SDL_QUIT: 
+					quit = true;
+					break;
 
                 default: break;
             }
@@ -192,39 +198,40 @@ int main(int argc, char * argv[]) {
 
 
         //Apply the image stretched
-        {
-            screen_texture = SDL_CreateTextureFromSurface(renderer, screen);
-            SDL_Rect stretchRect;
-            stretchRect.y = 0;
-            SDL_GetWindowSize(window, &stretchRect.w, &stretchRect.h);
-            float scale = ((stretchRect.h / 144.0));
-            float scale_w = ((stretchRect.w / 160.0));
-            if (scale_w < scale) {
-            	stretchRect.h = 144 * scale_w;
-            	scale = scale_w;
-            }
-            stretchRect.x = stretchRect.w;
-            stretchRect.w = scale * 160.0;
-            stretchRect.x = (stretchRect.x - stretchRect.w) / 2;
-            stretchRect.x = (stretchRect.x < 0) ? 0 : stretchRect.x;
-            ppu.get_screen();
-            SDL_RenderCopy(renderer, screen_texture, NULL, &stretchRect);
-            SDL_RenderPresent(renderer);
-            SDL_DestroyTexture(screen_texture);
-        }
+		if (!disable_screen) {
+			screen_texture = SDL_CreateTextureFromSurface(renderer, screen);
+			SDL_Rect stretchRect;
+			stretchRect.y = 0;
+			SDL_GetWindowSize(window, &stretchRect.w, &stretchRect.h);
+			float scale = ((stretchRect.h / 144.0));
+			float scale_w = ((stretchRect.w / 160.0));
+			if (scale_w < scale) {
+				stretchRect.h = 144 * scale_w;
+				scale = scale_w;
+			}
+			stretchRect.x = stretchRect.w;
+			stretchRect.w = scale * 160.0;
+			stretchRect.x = (stretchRect.x - stretchRect.w) / 2;
+			stretchRect.x = (stretchRect.x < 0) ? 0 : stretchRect.x;
 
-        auto time_after = std::chrono::high_resolution_clock::now();
-		uint32_t delta = std::chrono::duration_cast<std::chrono::milliseconds>(time_after - time).count();
-		delta -= floor(drift);
-		drift -= floor(drift);
-        if (delta < 16){
-            SDL_Delay(16 - delta);
+			SDL_RenderCopy(renderer, screen_texture, NULL, &stretchRect);
+			SDL_RenderPresent(renderer);
+			SDL_DestroyTexture(screen_texture);
 
-			time_after = std::chrono::high_resolution_clock::now();
-			delta = std::chrono::duration_cast<std::chrono::microseconds>(time_after - time).count();
-			float deltaf = delta / 1000.0;
-			drift += (16.57 - deltaf);
-        }
+			auto time_after = std::chrono::high_resolution_clock::now();
+			uint32_t delta = std::chrono::duration_cast<std::chrono::milliseconds>(time_after - time).count();
+			delta -= floor(drift);
+			drift -= floor(drift);
+			if (delta < 16) {
+				SDL_Delay(16 - delta);
+
+				time_after = std::chrono::high_resolution_clock::now();
+				delta = std::chrono::duration_cast<std::chrono::microseconds>(time_after - time).count();
+				float deltaf = delta / 1000.0;
+				drift += (16.57 - deltaf);
+			}
+		}
+		ppu.get_screen();
     }
     return EXIT_SUCCESS;
 }

@@ -8,6 +8,7 @@
 
 #include "Memory_map.hpp"
 #include <string.h>
+#include <stdio.h>
 
 Memory_map::Memory_map(Cart *cart, PPU * ppu, APU * apu): boot_rom_activated(false){
     this->cart = cart;
@@ -27,7 +28,7 @@ Memory_map::Memory_map(Cart *cart, PPU * ppu, APU * apu, const char * boot_rom_f
     joypad_reg = 0x00;
     DMA_src = 0;
     DMA_dst = 0;
-        
+
     std::ifstream file(boot_rom_file, std::ios::binary);
     boot_rom = std::vector<char>(std::istreambuf_iterator<char>(file),
                             std::istreambuf_iterator<char>());
@@ -53,6 +54,7 @@ uint8_t Memory_map::sync_cycle(uint8_t cycle){
             serial_recieved = 0xFF;
             serial_cycles_until_shift = 0;
             serial_clock &= 0x7F;
+            printf("%c", serial_data);
         }
     }
     return ppu->run((uint32_t)cycle) | ret;
@@ -62,7 +64,7 @@ uint8_t Memory_map::read(uint16_t addr){
     if(boot_rom_activated && addr < 0x0100 && boot_rom.size() >= addr){
         return boot_rom[addr];
     }
-    
+
     if(addr < 0x8000) { // ROM address space
         return cart->read(addr);
     }
@@ -87,7 +89,7 @@ uint8_t Memory_map::read(uint16_t addr){
     else if(addr >= 0xFF00 && addr <= 0xFF7F){ // IO controls address space
         if(addr == 0xFF00){
             if(joypad_reg == 0x10){
-                return 0xC0 | 0x10 | (joypad >> 4); 
+                return 0xC0 | 0x10 | (joypad >> 4);
             }
             else if (joypad_reg == 0x20){
                 return 0xC0 | 0x20 | (joypad & 0x0F);
