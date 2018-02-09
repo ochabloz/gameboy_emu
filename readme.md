@@ -9,10 +9,10 @@ Its purpose is solely educational
 - CPU is functional but not cycle accurate
 - PPU is functional but not cycle accurate
 - APU is not implemented yet.
-- Serial is emulated
+- Serial is emulated to a never connected state
 
 ### Requirements
 - SDL2
 
-### Disclamer 
+### Disclamer
 Since better emulators exists you are not advised to use this one in its current form.

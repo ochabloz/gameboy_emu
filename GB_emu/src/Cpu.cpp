@@ -217,14 +217,14 @@ uint8_t Cpu::run(){
 
         case 0x3F: flag_c ^= true; SF_N(0); SF_H(0); break;
 
-        case 0x06: ld_n_Handler(&B, read_PC_mem()); break;
+        case 0x06: ld_n_Handler(&B, read_PC_mem()); break; // ld B, #
         case 0x0E: ld_n_Handler(&C, read_PC_mem()); break;
         case 0x16: ld_n_Handler(&D, read_PC_mem()); break;
         case 0x1E: ld_n_Handler(&E, read_PC_mem()); break;
         case 0x26: ld_n_Handler(&H, read_PC_mem()); break;
         case 0x2E: ld_n_Handler(&L, read_PC_mem()); break;
         case 0x3E: ld_n_Handler(&A, read_PC_mem()); break;
-        case 0x47: ld_n_Handler(&B, A); break;
+        case 0x47: ld_n_Handler(&B, A); break;			   // ld B, A
         case 0x4F: ld_n_Handler(&C, A); break;
         case 0x57: ld_n_Handler(&D, A); break;
         case 0x5F: ld_n_Handler(&E, A); break;
@@ -241,7 +241,7 @@ uint8_t Cpu::run(){
         case 0x1A: ld_n_Handler(&A, read_mem(REG(D,E))); break;
         case 0x7E: ld_n_Handler(&A, read_mem(REG(H,L))); break;
         case 0xFA:{
-            uint16_t addr = read_PC_mem();
+            uint16_t addr = read_PC_mem();				 // ld A, ##[]
             addr |= read_PC_mem() << 8;
             ld_n_Handler(&A, read_mem(addr));
         } break;
