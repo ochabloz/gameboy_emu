@@ -108,7 +108,6 @@ class Cpu {
     inline void ldhlsp_plus_n_handler();
 
     // misc
-    std::ofstream myfile;
     inline void swap(uint8_t *reg);
 
     inline void run_timer();

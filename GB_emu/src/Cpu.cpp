@@ -11,9 +11,6 @@
 #include  <iomanip>
 using namespace std;
 
-//#define TRACE
-
-
 #define writeHL(data) write_mem(REG(H, L), data)
 #define readHL() read_mem(REG(H, L))
 #define pushPC() push((uint8_t)(PC >> 8)); push((uint8_t)(PC & 0xFF))
@@ -32,15 +29,9 @@ Cpu::Cpu(Memory_map *m, bool dirty_boot):
     writeF(0xB0);
 
     mem = m;
-#ifdef TRACE
-    myfile.open ("/Users/Olivier/Dropbox/Coding/gameboy/emu/gb_emu.log", ios::out);
-#endif
 };
 
 Cpu::~Cpu(){
-#ifdef TRACE
-    myfile.close();
-#endif
 }
 
 inline void Cpu::writeF(uint8_t val){
@@ -158,22 +149,7 @@ uint8_t Cpu::run(){
         cycle += 4;
     }
     else{
-#ifdef TRACE
-        myfile << "PC=0x"<< setfill('0') << setw(4) << std::hex << PC <<";";
-        myfile <<" SP=0x"<< setfill('0') << setw(4) << std::hex << SP <<";";
-        myfile << " A=0x"<< setfill('0') << setw(2) << std::hex << (uint16_t)A <<";";
-        myfile << " B=0x"<< setfill('0') << setw(2) << std::hex << (uint16_t)B <<";";
-        myfile << " C=0x"<< setfill('0') << setw(2) << std::hex << (uint16_t)C <<";";
-        myfile << " D=0x"<< setfill('0') << setw(2) << std::hex << (uint16_t)D <<";";
-        myfile << " E=0x"<< setfill('0') << setw(2) << std::hex << (uint16_t)E <<";";
-        myfile << " H=0x"<< setfill('0') << setw(2) << std::hex << (uint16_t)H <<";";
-        myfile << " L=0x"<< setfill('0') << setw(2) << std::hex << (uint16_t)L <<";";
-        myfile << " F=0x"<< setfill('0') << setw(2) << std::hex << (uint16_t)F <<";";
-#endif
         opcode = read_PC_mem();
-#ifdef TRACE
-        myfile << " OP=0x"<< setfill('0') << setw(2) << std::hex << (uint16_t)opcode <<";";
-#endif
     }
 
     switch (opcode) {
@@ -813,12 +789,6 @@ uint8_t Cpu::run(){
             break;
     }
 
-#ifdef TRACE
-    if (!halted) {
-        myfile << " cycles :" << (uint16_t)cycle<< ";";
-        myfile << std::endl;
-    }
-#endif
     // sync memory with cpu
     request_interrupt(mem->sync_cycle(cycle - mem_cycle));
 
