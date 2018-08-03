@@ -130,9 +130,9 @@ void Cart::mbc1_write(uint16_t addr, uint8_t data){
                 rom_bank1 |= (data & 0x3) << 5;
                 if (rom_bank1 > (rom_size - 1)) {
                     rom_bank1 = rom_size - 1;
-                    printf("Warning! rom bank 1 is greater than size !\n");
+                //    printf("Warning! rom bank 1 is greater than size !\n");
                 }
-                printf("HI bank number changed : [%4X] = %X\n", addr, rom_bank1);
+                //printf("HI bank number changed : [%4X] = %X\n", addr, rom_bank1);
                 break;
             }
             case RAM_MODE:
