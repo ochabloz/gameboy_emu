@@ -24,8 +24,8 @@ using namespace std;
 #define check_bit(x, reg) do{SF_Z(((reg) & (0x1 << (x))) == 0); SF_H(1); SF_N(0);}while(0)
 
 Cpu::Cpu(Memory_map *m, bool dirty_boot):
-    SP(0xfffe), A(0x11), B(0x00), C(0x13), D(0x00), E(0xd8), H(0x01), L(0x4d),
-    timer_DIV(0xABCC), timer_TIMA(0x00), timer_TMA(0x00), timer_TCRL(0xF8),
+    SP(0xfffe), A(0x01), B(0x00), C(0x13), D(0x00), E(0xd8), H(0x01), L(0x4d),
+    timer_DIV(0x90A4), timer_TIMA(0x00), timer_TMA(0x00), timer_TCRL(0xF8),
     halted(false),
     IME(0), IF(0x01), IE(0x00){
     PC = (dirty_boot) ? 0x00 : 0x100;
