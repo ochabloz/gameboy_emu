@@ -27,6 +27,7 @@ extern "C"{
 #include <SDL.h>
 #endif
 
+#define DEFAULT_SCREEN_SCALE 4
 
 #define BGB
 
@@ -56,10 +57,6 @@ void audio_callback(void * data, uint8_t * stream, int len);
 #define MAP_COLOR(X) SDL_MapRGBA(screen->format,(X & 0xff0000)>>16, (X & 0xff00)>>8,X & 0xff, 0xff)
 
 int main(int argc, char * argv[]) {
-    double screen_scale = 4;
-    int screen_width = ceilf(160.0 * screen_scale);
-    int screen_height = ceilf(144.0 * screen_scale);
-
     bool disable_audio = true;
 
     SDL_Surface * screen;
@@ -75,24 +72,25 @@ int main(int argc, char * argv[]) {
 	if (help_text) {
 		puts("By no means feature complete GAME BOY emulator.");
 		puts("Options:");
-		puts("[-b bootrom.bin] will start the emulation by executing the given bootrom.");
-		puts("[-s SCALE] a scale factor for the screen (float accepted).");
-		puts("[--fullscreen] open the emulator in fullscreen mode.");
-		puts("[--disable_screen] no window will be opened. Useful when running test rom.");
-		puts("[--help] print this message and exit.");
+		puts("\t[-b bootrom.bin]\t Will start the emulation by executing the given bootrom.");
+		puts("\t[-s SCALE]\t\t A scale factor for the screen (float accepted).");
+		puts("\t[--fullscreen]\t\t Open the emulator in fullscreen mode.");
+		puts("\t[--disable_screen]\t No window will be opened. Useful when running test rom.");
+		puts("\t[--help]\t\t Print this message and exit.");
 		puts("\nTypical Usage:");
-		printf("%s romfile.gb\n", argv[0]);
+		printf("\t%s romfile.gb\n", argv[0]);
 		return EXIT_SUCCESS;
 	}
 
+	double screen_scale = DEFAULT_SCREEN_SCALE;
     if(scale != nullptr){
         if (atof(scale) > 0.1) {
             screen_scale = atof(scale);
-            screen_width = 160.0 * screen_scale;
-            screen_height = 144.0 * screen_scale;
         }
-        else printf("-s %s is not a valid argument\n", scale);
+        else printf("SCALE %s is not a valid argument\n", scale);
     }
+	int screen_width = ceilf(160.0 * screen_scale);
+	int screen_height = ceilf(144.0 * screen_scale);
 
     if (cart_name == nullptr) {
         printf("Usage : %s romfile.gb\n", argv[0]);
