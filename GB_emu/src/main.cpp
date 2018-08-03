@@ -35,11 +35,19 @@ extern "C"{
 #define COLOR1 0x88c070
 #define COLOR2 0x346856
 #define COLOR3 0x081820
+#else
+#ifdef SHARP  // 2 colors
+#define COLOR0 0xebf442
+#define COLOR1 0xebf442
+#define COLOR2 0x000000
+#define COLOR3 0x000000
+
 #else      // B/W palette
 #define COLOR0 0xEEEEEE
 #define COLOR1 0xCCCCCC
 #define COLOR2 0x888888
 #define COLOR3 0x000000
+#endif
 #endif
 
 
@@ -61,7 +69,21 @@ int main(int argc, char * argv[]) {
     const char * cart_name = argparse_get_positional(parser, 0);
     bool fullscreen = (bool)argparse_get_long_opt(parser, "fullscreen");
 	bool disable_screen = (bool)argparse_get_long_opt(parser, "disable_screen");
+	bool help_text = (bool)argparse_get_long_opt(parser, "help");
     const char * scale = argparse_get_opt(parser, 's');
+
+	if (help_text) {
+		puts("By no means feature complete GAME BOY emulator.");
+		puts("Options:");
+		puts("[-b bootrom.bin] will start the emulation by executing the given bootrom.");
+		puts("[-s SCALE] a scale factor for the screen (float accepted).");
+		puts("[--fullscreen] open the emulator in fullscreen mode.");
+		puts("[--disable_screen] no window will be opened. Useful when running test rom.");
+		puts("[--help] print this message and exit.");
+		puts("\nTypical Usage:");
+		printf("%s romfile.gb\n", argv[0]);
+		return EXIT_SUCCESS;
+	}
 
     if(scale != nullptr){
         if (atof(scale) > 0.1) {
