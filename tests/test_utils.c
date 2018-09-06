@@ -39,3 +39,31 @@ TEST(test_utils, replace_with_shorter_ext){
     STRCMP_EQUAL("somefile.sav", rom_file);
     free(rom_file);
 }
+
+TEST(test_utils, get_filename){
+    const char * path = "C:\\Users\\georges\\Downloads\\my-file.ext";
+    const char * filename = path_get_filename(path);
+    STRCMP_EQUAL("my-file.ext", filename);
+}
+
+TEST(test_utils, get_filename_not_found){
+    const char * path = "C:\\Users\\georges\\Downloads\\";
+    const char * filename = path_get_filename(path);
+    CHECK(filename == NULL);
+}
+
+TEST(test_utils, is_filename){
+    const char * path = "my-file.ext";
+    const char * filename = path_get_filename(path);
+    STRCMP_EQUAL("my-file.ext", filename);
+}
+
+TEST(test_utils, path_concatenate){
+    const char * path1 = "C:\\Users\\georges\\Downloads\\";
+    const char * path11 = "C:\\Users\\georges\\Downloads";
+    const char * path2 = "my-file.ext";
+    const char * filename = path_concatenate(path1, path2);
+    STRCMP_EQUAL("C:\\Users\\georges\\Downloads\\my-file.ext", filename);
+    const char * filename2 = path_concatenate(path11, path2);
+    STRCMP_EQUAL("C:\\Users\\georges\\Downloads\\my-file.ext", filename2);
+}

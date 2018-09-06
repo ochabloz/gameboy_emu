@@ -12,7 +12,7 @@ extern "C"{
 }
 #include <string.h>
 
-Cart::Cart(const char * file_path):  ram_size(0), rtc(nullptr){
+Cart::Cart(const char * file_path, const char * save_path):  ram_size(0), rtc(nullptr){
     std::ifstream file(file_path, std::ios::binary);
     rom = std::vector<char>(std::istreambuf_iterator<char>(file),
                                std::istreambuf_iterator<char>());
@@ -21,6 +21,7 @@ Cart::Cart(const char * file_path):  ram_size(0), rtc(nullptr){
         gb_mode = 0xFF;
         return;
     }
+	this->save_path = save_path;
     cart_ram_enable = false;
 
     for (int i = 0; i < 0x10; i++) {
@@ -55,11 +56,18 @@ Cart::Cart(const char * file_path):  ram_size(0), rtc(nullptr){
     }
     // When a cartridge contains ram, create or open a file with name "<rom_file>.sav"
     if (ram_size > 0) {
-        file_path_rom = (char*)malloc(strlen(file_path) + 1);
-        memcpy(file_path_rom, file_path, strlen(file_path) + 1);
+        if(save_path != NULL){
+            const char * filename = path_get_filename(file_path);
+            save_file = path_concatenate(save_path, filename);
+            save_file = filename_replace_ext(save_file, "sav");
+        }
+        else{
+            save_file = (char*)malloc(strlen(file_path) + 1);
+            memcpy(save_file, file_path, strlen(file_path) + 1);
+            save_file = filename_replace_ext(save_file, "sav");
+        }
 
-        file_path_rom = filename_replace_ext(file_path_rom, "sav");
-        std::ifstream sav_file (file_path_rom, std::ios::binary);
+        std::ifstream sav_file (save_file, std::ios::binary);
         std::vector<char> ram_tmp = std::vector<char>(std::istreambuf_iterator<char>(sav_file),
                           std::istreambuf_iterator<char>());
 
@@ -87,7 +95,7 @@ Cart::~Cart(){
         delete rtc;
     }
     if (ram_size > 0) {
-        std::ofstream sav_file (file_path_rom, std::ios::binary);
+        std::ofstream sav_file (save_file, std::ios::binary);
         sav_file.write(reinterpret_cast<char*>(&ram[0]), ram.size());
         sav_file.close();
     }

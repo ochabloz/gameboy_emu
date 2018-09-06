@@ -63,6 +63,7 @@ int main(int argc, char * argv[]) {
     // parse arguments :
     argparse_t parser = argparse_init(argc, (const char **)argv);
     const char * boot_rom  = argparse_get_opt(parser, 'b');
+	const char * save_path = argparse_get_opt(parser, 'r');
     const char * cart_name = argparse_get_positional(parser, 0);
     bool fullscreen = (bool)argparse_get_long_opt(parser, "fullscreen");
 	bool disable_screen = (bool)argparse_get_long_opt(parser, "disable_screen");
@@ -73,6 +74,7 @@ int main(int argc, char * argv[]) {
 		puts("By no means feature complete GAME BOY emulator.");
 		puts("Options:");
 		puts("\t[-b bootrom.bin]\t Will start the emulation by executing the given bootrom.");
+		puts("\t[-r path]\t Directory where to read and write saved game");
 		puts("\t[-s SCALE]\t\t A scale factor for the screen (float accepted).");
 		puts("\t[--fullscreen]\t\t Open the emulator in fullscreen mode.");
 		puts("\t[--disable_screen]\t No window will be opened. Useful when running test rom.");
@@ -97,7 +99,7 @@ int main(int argc, char * argv[]) {
         return EXIT_SUCCESS;
     }
 
-    Cart cart(cart_name);
+    Cart cart(cart_name, save_path);
     if(!cart.status()){
         printf("the cartridge header doesn't match the checksum\n");
         return EXIT_SUCCESS;
