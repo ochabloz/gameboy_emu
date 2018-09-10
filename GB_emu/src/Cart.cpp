@@ -54,6 +54,10 @@ Cart::Cart(const char * file_path, const char * save_path):  ram_size(0), rtc(nu
         case 0x04: ram_size = 16; break;
         default:   ram_size = 0; break;
     }
+	if (cart_type == MBC2_BAT) {
+		ram_size = 1;
+	}
+
     // When a cartridge contains ram, create or open a file with name "<rom_file>.sav"
     if (ram_size > 0) {
         if(save_path != NULL){
@@ -243,6 +247,7 @@ void Cart::write(uint16_t addr, uint8_t data){
         case MBC1:
         case MBC1_RAM:
         case MBC1_RAM_BAT:
+		case MBC2_BAT:
             mbc1_write(addr, data); break;
 
         case MBC3_RAM_TIM_BAT:
