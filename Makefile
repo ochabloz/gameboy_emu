@@ -8,7 +8,11 @@ CPPFLAGS  := -g -Wall -std=c++11
 # Flags included for both cpp and c compilation
 CXXFLAGS  += -I GB_emu/includes/
 CPPFLAGS_TESTS := -D CPPUTEST
-LDFLAGS := -lSDL2
+ifeq ($(shell uname -s), MINGW64_NT-10.0)
+	LDFLAGS := `sdl2-config --cflags --libs`
+else
+	LDFLAGS := -lSDL2
+endif
 
 SRC_DIR := GB_emu/src/
 
@@ -29,8 +33,8 @@ $(OBJ_DIR)%.o: $(SRC_DIR)%.c
 	$(CC) $(CFLAGS) $(CXXFLAGS) -c -o $@ $<
 
 # Additional compiled test program
-GB_emu: $(OBJ_FILES) objs/argparse.o  objs/utils.o
-	$(CPP) -o $(OBJ_DIR)$@ $^ $(LDFLAGS)
+GB_emu: $(OBJ_FILES) $(OBJ_DIR)argparse.o  $(OBJ_DIR)utils.o
+	$(CPP) -o $@ $^ $(LDFLAGS)
 
 
 $(OBJTST_DIR)%.o: tests/%.c
@@ -38,12 +42,16 @@ $(OBJTST_DIR)%.o: tests/%.c
 	$(CPP) $(CPPFLAGS) $(CXXFLAGS) -c -o $@ $<
 
 # Additional compiled test program
-test: $(TST_OBJ_FILES) objs/Cart.o objs/Cpu.o objs/Memory_map.o objs/PPU.o objs/rtc.o objs/APU.o objs/argparse.o objs/utils.o
+test: $(TST_OBJ_FILES) $(OBJ_DIR)Cart.o $(OBJ_DIR)Cpu.o $(OBJ_DIR)Memory_map.o $(OBJ_DIR)PPU.o $(OBJ_DIR)rtc.o $(OBJ_DIR)APU.o $(OBJ_DIR)argparse.o $(OBJ_DIR)utils.o
 	$(CPP) -o $(OBJ_DIR)$@ $^ -lCppUTest
-	objs/test
+	$(OBJ_DIR)test
 
 all: GB_emu test
 	$(OBJ_DIR)$<
+
+debug: CXXFLAGS += -DDEBUG -g
+debug: CFLAGS += -DDEBUG -g
+debug: GB_emu
 
 .PHONY: clean
 clean:

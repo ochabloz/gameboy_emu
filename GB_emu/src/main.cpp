@@ -21,11 +21,8 @@ extern "C"{
   #include "argparse.h"
 }
 
-#ifndef _WIN32
 #include <SDL2/SDL.h>
-#else
-#include <SDL.h>
-#endif
+#include <SDL2/SDL_main.h>
 
 #define DEFAULT_SCREEN_SCALE 4
 
