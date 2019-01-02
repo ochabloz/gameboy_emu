@@ -8,11 +8,14 @@ CPPFLAGS  := -g -Wall -std=c++11
 # Flags included for both cpp and c compilation
 CXXFLAGS  += -I GB_emu/includes/
 CPPFLAGS_TESTS := -D CPPUTEST
+
 ifeq ($(shell uname -s), MINGW64_NT-10.0)
 	LDFLAGS := `sdl2-config --cflags --libs`
 else
 	LDFLAGS := -lSDL2
 endif
+
+EXE := GB_emu
 
 SRC_DIR := GB_emu/src/
 
@@ -33,7 +36,7 @@ $(OBJ_DIR)%.o: $(SRC_DIR)%.c
 	$(CC) $(CFLAGS) $(CXXFLAGS) -c -o $@ $<
 
 # Additional compiled test program
-GB_emu: $(OBJ_FILES) $(OBJ_DIR)argparse.o  $(OBJ_DIR)utils.o
+$(EXE): $(OBJ_FILES) $(OBJ_DIR)argparse.o  $(OBJ_DIR)utils.o
 	$(CPP) -o $@ $^ $(LDFLAGS)
 
 
@@ -46,14 +49,14 @@ test: $(TST_OBJ_FILES) $(OBJ_DIR)Cart.o $(OBJ_DIR)Cpu.o $(OBJ_DIR)Memory_map.o $
 	$(CPP) -o $(OBJ_DIR)$@ $^ -lCppUTest
 	$(OBJ_DIR)test
 
-all: GB_emu test
+all: $(EXE) test
 	$(OBJ_DIR)$<
 
 debug: CXXFLAGS += -DDEBUG -g
 debug: CFLAGS += -DDEBUG -g
-debug: GB_emu
+debug: $(EXE)
 
 .PHONY: clean
 clean:
 	@echo "clean..."
-	rm -rf $(OBJ_DIR)
+	rm -rf $(OBJ_DIR) $(EXE) $(EXE).exe
