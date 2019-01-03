@@ -1,9 +1,12 @@
 CC      := gcc
-CFLAGS    := -g -Wall
-CFLAGS  += -std=gnu99
-# CPPUTest is C++Write, so using g++ To compile the test file
 CPP     := g++
-CPPFLAGS  := -g -Wall -std=c++11
+
+
+CFLAGS    := -Wall
+CFLAGS  += -std=gnu99
+
+# Flags included for c++ compilation
+CPPFLAGS  := -Wall -std=c++11
 
 # Flags included for both cpp and c compilation
 CXXFLAGS  += -I GB_emu/includes/
@@ -15,7 +18,7 @@ else
 	LDFLAGS := -lSDL2
 endif
 
-EXE := GB_emu
+EXE := GB
 
 SRC_DIR := GB_emu/src/
 
@@ -28,11 +31,9 @@ TST_FILES := $(wildcard tests/*.c)
 TST_OBJ_FILES := $(patsubst tests/%.c, $(OBJTST_DIR)%.o,$(TST_FILES))
 
 $(OBJ_DIR)%.o: $(SRC_DIR)%.cpp
-	mkdir -p $(OBJ_DIR)
 	$(CPP) $(CPPFLAGS) $(CXXFLAGS) -c -o $@ $<
 
 $(OBJ_DIR)%.o: $(SRC_DIR)%.c
-	mkdir -p $(OBJ_DIR)
 	$(CC) $(CFLAGS) $(CXXFLAGS) -c -o $@ $<
 
 # Additional compiled test program
@@ -41,20 +42,29 @@ $(EXE): $(OBJ_FILES) $(OBJ_DIR)argparse.o  $(OBJ_DIR)utils.o
 
 
 $(OBJTST_DIR)%.o: tests/%.c
-	mkdir -p $(OBJTST_DIR)
 	$(CPP) $(CPPFLAGS) $(CXXFLAGS) -c -o $@ $<
 
 # Additional compiled test program
-test: $(TST_OBJ_FILES) $(OBJ_DIR)Cart.o $(OBJ_DIR)Cpu.o $(OBJ_DIR)Memory_map.o $(OBJ_DIR)PPU.o $(OBJ_DIR)rtc.o $(OBJ_DIR)APU.o $(OBJ_DIR)argparse.o $(OBJ_DIR)utils.o
+test_target: $(TST_OBJ_FILES) $(OBJ_DIR)Cart.o $(OBJ_DIR)Cpu.o $(OBJ_DIR)Memory_map.o $(OBJ_DIR)PPU.o $(OBJ_DIR)rtc.o $(OBJ_DIR)APU.o $(OBJ_DIR)argparse.o $(OBJ_DIR)utils.o
 	$(CPP) -o $(OBJ_DIR)$@ $^ -lCppUTest
-	$(OBJ_DIR)test
+	$(OBJ_DIR)$@
 
-all: $(EXE) test
+all: release test
 	$(OBJ_DIR)$<
 
-debug: CXXFLAGS += -DDEBUG -g
 debug: CFLAGS += -DDEBUG -g
-debug: $(EXE)
+debug: mk $(EXE)
+
+release: CXXFLAGS += -O1
+release: mk $(EXE)
+
+test: mktst test_target
+
+mk: 
+	mkdir -p $(OBJ_DIR)
+
+mktst: 
+	mkdir -p $(OBJTST_DIR)
 
 .PHONY: clean
 clean:
