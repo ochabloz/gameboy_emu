@@ -5,12 +5,12 @@
     "version": "0.2.0",
     "configurations": [
         {
-            "name": "(gdb) Launch",
+            "name": "Run Release",
             "type": "cppdbg",
             "request": "launch",
-            "program": "${workspaceFolder}/GB_emu.exe",
+            "program": "${workspaceFolder}/GB.exe",
             "args": ["Z:\\Nintendo - Game Boy\\Pokemon - Version Rouge (France).gb"],
-            "stopAtEntry": true,
+            "stopAtEntry": false,
             "cwd": "${workspaceFolder}",
             "environment": [],
             "externalConsole": false,
@@ -23,7 +23,28 @@
                     "ignoreFailures": true
                 }
             ],
-            "preLaunchTask": "msys2-mingw64 build"
+            "preLaunchTask": "msys2-mingw64 release"
+        }
+        {
+            "name": "(gdb) Launch",
+            "type": "cppdbg",
+            "request": "launch",
+            "program": "${workspaceFolder}/GB.exe",
+            "args": ["Z:\\Nintendo - Game Boy\\Pokemon - Version Rouge (France).gb"],
+            "stopAtEntry": false,
+            "cwd": "${workspaceFolder}",
+            "environment": [],
+            "externalConsole": false,
+            "MIMode": "gdb",
+            "miDebuggerPath": "c:\\msys64\\mingw64\\bin\\gdb.exe",
+            "setupCommands": [
+                {
+                    "description": "Enable pretty-printing for gdb",
+                    "text": "-enable-pretty-printing",
+                    "ignoreFailures": true
+                }
+            ],
+            "preLaunchTask": "msys2-mingw64 rebuild"
         }
     ]
 }

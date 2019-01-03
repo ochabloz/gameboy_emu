@@ -4,15 +4,24 @@
     "version": "2.0.0",
     "tasks": [
         {
-            "label": "echo",
-            "type": "shell",
-            "command": "echo Hello"
-        },
-        {
-            "label": "msys2-mingw64 build",
+            "label": "msys2-mingw64 rebuild",
             "type": "shell",
             "group": "build",
-            "command": "make debug",
+            "command": "make clean debug",
+            "options": {
+               "shell": {
+                  "executable": "C:\\msys64\\usr\\bin\\bash.exe",
+                  "args": [
+                     "-c"
+                  ]
+               }
+            }
+         },
+         {
+            "label": "msys2-mingw64 release",
+            "type": "shell",
+            "group": "build",
+            "command": "make clean release",
             "options": {
                "shell": {
                   "executable": "C:\\msys64\\usr\\bin\\bash.exe",
