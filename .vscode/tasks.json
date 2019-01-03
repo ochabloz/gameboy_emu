@@ -18,6 +18,20 @@
             }
          },
          {
+            "label": "msys2-mingw64 build",
+            "type": "shell",
+            "group": "build",
+            "command": "make debug",
+            "options": {
+               "shell": {
+                  "executable": "C:\\msys64\\usr\\bin\\bash.exe",
+                  "args": [
+                     "-c"
+                  ]
+               }
+            }
+         },
+         {
             "label": "msys2-mingw64 release",
             "type": "shell",
             "group": "build",

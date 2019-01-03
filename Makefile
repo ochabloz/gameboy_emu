@@ -50,12 +50,12 @@ test_target: $(TST_OBJ_FILES) $(OBJ_DIR)Cart.o $(OBJ_DIR)Cpu.o $(OBJ_DIR)Memory_
 	$(OBJ_DIR)$@
 
 all: release test
-	$(OBJ_DIR)$<
 
-debug: CFLAGS += -DDEBUG -g
+debug: CXXFLAGS += -DDEBUG -g
 debug: mk $(EXE)
 
 release: CXXFLAGS += -O1
+release: LDFLAGS += -static-libgcc -static-libstdc++
 release: mk $(EXE)
 
 test: mktst test_target

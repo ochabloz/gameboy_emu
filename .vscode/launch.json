@@ -9,7 +9,7 @@
             "type": "cppdbg",
             "request": "launch",
             "program": "${workspaceFolder}/GB.exe",
-            "args": ["Z:\\Nintendo - Game Boy\\Pokemon - Version Rouge (France).gb"],
+            "args": [""],
             "stopAtEntry": false,
             "cwd": "${workspaceFolder}",
             "environment": [],
@@ -30,7 +30,7 @@
             "type": "cppdbg",
             "request": "launch",
             "program": "${workspaceFolder}/GB.exe",
-            "args": ["Z:\\Nintendo - Game Boy\\Pokemon - Version Rouge (France).gb"],
+            "args": [],
             "stopAtEntry": false,
             "cwd": "${workspaceFolder}",
             "environment": [],
@@ -44,7 +44,7 @@
                     "ignoreFailures": true
                 }
             ],
-            "preLaunchTask": "msys2-mingw64 rebuild"
+            "preLaunchTask": "msys2-mingw64 build"
         }
     ]
 }
