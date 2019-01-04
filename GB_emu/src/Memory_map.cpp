@@ -10,16 +10,6 @@
 #include <string.h>
 #include <stdio.h>
 
-Memory_map::Memory_map(Cart *cart, PPU * ppu, APU * apu): boot_rom_activated(false){
-    this->cart = cart;
-    this->ppu = ppu;
-    this->apu = apu;
-    joypad = 0xFF;
-    joypad_reg = 0x00;
-    DMA_src = 0;
-    DMA_dst = 0;
-}
-
 Memory_map::Memory_map(Cart *cart, PPU * ppu, APU * apu, const char * boot_rom_file){
     this->cart = cart;
     this->ppu = ppu;
@@ -28,10 +18,13 @@ Memory_map::Memory_map(Cart *cart, PPU * ppu, APU * apu, const char * boot_rom_f
     joypad_reg = 0x00;
     DMA_src = 0;
     DMA_dst = 0;
-
+    boot_rom_activated = false;
+    if(boot_rom_file == nullptr) return;
     std::ifstream file(boot_rom_file, std::ios::binary);
-    boot_rom = std::vector<char>(std::istreambuf_iterator<char>(file),
-                            std::istreambuf_iterator<char>());
+
+    if(!file.good()) return;
+
+    boot_rom = std::vector<char>(std::istreambuf_iterator<char>(file), std::istreambuf_iterator<char>());
     file.close();
     boot_rom_activated = true;
 }
