@@ -19,6 +19,7 @@
 
 extern "C"{
   #include "argparse.h"
+  #include "iniparse.h"
 }
 
 #include <SDL2/SDL.h>
@@ -26,28 +27,11 @@ extern "C"{
 
 #define DEFAULT_SCREEN_SCALE 4
 
-#define BGB
-
-#ifdef BGB // BGB palette (greenish tint)
-#define COLOR0 0xe0f8d0
-#define COLOR1 0x88c070
-#define COLOR2 0x346856
-#define COLOR3 0x081820
-#else
-#ifdef SHARP  // 2 colors
-#define COLOR0 0xebf442
-#define COLOR1 0xebf442
-#define COLOR2 0x000000
-#define COLOR3 0x000000
-
-#else      // B/W palette
-#define COLOR0 0xEEEEEE
-#define COLOR1 0xCCCCCC
-#define COLOR2 0x888888
-#define COLOR3 0x000000
-#endif
-#endif
-
+// BGB palette (greenish tint)
+#define DEFAULT_COLOR0 0xe0f8d0
+#define DEFAULT_COLOR1 0x88c070
+#define DEFAULT_COLOR2 0x346856
+#define DEFAULT_COLOR3 0x081820
 
 void audio_callback(void * data, uint8_t * stream, int len);
 
@@ -66,6 +50,7 @@ int main(int argc, char * argv[]) {
 	bool disable_screen = (bool)argparse_get_long_opt(parser, "disable_screen");
 	bool help_text = (bool)argparse_get_long_opt(parser, "help");
     const char * scale = argparse_get_opt(parser, 's');
+    const char * cfg_file = argparse_get_opt(parser, 'c');
 
 	if (help_text) {
 		puts("By no means feature complete GAME BOY emulator.");
@@ -73,6 +58,7 @@ int main(int argc, char * argv[]) {
 		puts("\t[-b bootrom.bin]\t Will start the emulation by executing the given bootrom.");
 		puts("\t[-r path]\t Directory where to read and write saved game");
 		puts("\t[-s SCALE]\t\t A scale factor for the screen (float accepted).");
+        puts("\t[-c cfg_file]\t\t Configuration file to use");
 		puts("\t[--fullscreen]\t\t Open the emulator in fullscreen mode.");
 		puts("\t[--disable_screen]\t No window will be opened. Useful when running test rom.");
 		puts("\t[--help]\t\t Print this message and exit.");
@@ -91,6 +77,14 @@ int main(int argc, char * argv[]) {
 	int screen_width = ceilf(160.0 * screen_scale);
 	int screen_height = ceilf(144.0 * screen_scale);
 
+    iniparse_t ini = nullptr;
+    if(cfg_file == nullptr){
+        ini = iniparse_init("GB.cfg");
+    }
+    else{
+        ini = iniparse_init(cfg_file);
+    }
+
     if (cart_name == nullptr) {
         printf("Usage : %s romfile.gb\n", argv[0]);
         return EXIT_SUCCESS;
@@ -106,26 +100,28 @@ int main(int argc, char * argv[]) {
         return EXIT_FAILURE;
     }
 
+    if(!fullscreen) fullscreen = iniparse_get_bool(ini, "GB:fullscreen") > 0;
+
     screen = SDL_CreateRGBSurface(0, 160, 144, 32, 0, 0, 0, 0);
+    uint32_t c0 = DEFAULT_COLOR0, c1 = DEFAULT_COLOR1, c2 = DEFAULT_COLOR2, c3 = DEFAULT_COLOR3;
+    if(iniparse_get_key(ini, "Palette:c0") != NULL) c0 = iniparse_get_int(ini, "Palette:c0");
+    if(iniparse_get_key(ini, "Palette:c1") != NULL) c1 = iniparse_get_int(ini, "Palette:c1");
+    if(iniparse_get_key(ini, "Palette:c2") != NULL) c2 = iniparse_get_int(ini, "Palette:c2");
+    if(iniparse_get_key(ini, "Palette:c3") != NULL) c3 = iniparse_get_int(ini, "Palette:c3");
     PPU ppu(cart.status(),
             (uint32_t *)screen->pixels,
-            MAP_COLOR(COLOR0),
-            MAP_COLOR(COLOR1),
-            MAP_COLOR(COLOR2),
-            MAP_COLOR(COLOR3)
+            MAP_COLOR(c0),
+            MAP_COLOR(c1),
+            MAP_COLOR(c2),
+            MAP_COLOR(c3)
           );
 
     APU apu;
     Memory_map *memory;
     Cpu * processor;
-    if(boot_rom == nullptr){
-        memory = new Memory_map(&cart, &ppu, &apu);
-        processor = new Cpu(memory, false);
-    }
-    else{
-        memory = new Memory_map(&cart, &ppu, &apu, boot_rom);
-        processor = new Cpu(memory, true);
-    }
+    if(boot_rom == nullptr) boot_rom = iniparse_get_key(ini, "GB:bios");
+    memory = new Memory_map(&cart, &ppu, &apu, boot_rom);
+    processor = new Cpu(memory, memory->has_bootrom());
 
     // initialise audio
     static SDL_AudioSpec audio_spec;
