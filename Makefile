@@ -45,7 +45,7 @@ $(OBJTST_DIR)%.o: tests/%.c
 	$(CPP) $(CPPFLAGS) $(CXXFLAGS) -c -o $@ $<
 
 # Additional compiled test program
-test_target: $(TST_OBJ_FILES) $(OBJ_DIR)Cart.o $(OBJ_DIR)Cpu.o $(OBJ_DIR)Memory_map.o $(OBJ_DIR)PPU.o $(OBJ_DIR)rtc.o $(OBJ_DIR)APU.o $(OBJ_DIR)argparse.o $(OBJ_DIR)utils.o
+test_target: $(TST_OBJ_FILES) $(OBJ_DIR)Cart.o $(OBJ_DIR)Cpu.o $(OBJ_DIR)Memory_map.o $(OBJ_DIR)PPU.o $(OBJ_DIR)rtc.o $(OBJ_DIR)APU.o $(OBJ_DIR)argparse.o $(OBJ_DIR)utils.o $(OBJ_DIR)iniparse.o
 	$(CPP) -o $(OBJ_DIR)$@ $^ -lCppUTest
 	$(OBJ_DIR)$@
 
