@@ -37,6 +37,22 @@ void audio_callback(void * data, uint8_t * stream, int len);
 
 #define MAP_COLOR(X) SDL_MapRGBA(screen->format,(X & 0xff0000)>>16, (X & 0xff00)>>8,X & 0xff, 0xff)
 
+uint8_t current_palette = 0xff; 
+void set_next_palette(PPU * ppu, iniparse_t ini, SDL_Surface * screen){
+    current_palette++;
+    uint32_t c[4] = {DEFAULT_COLOR0, DEFAULT_COLOR1, DEFAULT_COLOR2, DEFAULT_COLOR3};
+    char palette_setting[14] = {0};
+    sprintf(palette_setting, "Palette%d:c%d", current_palette, 0);
+    if(iniparse_get_key(ini, palette_setting) == NULL) current_palette = 0;
+    
+    for(int i = 0; i < 4; i++)
+    {
+        sprintf(palette_setting, "Palette%d:c%d", current_palette, i);
+        if(iniparse_get_key(ini, palette_setting) != NULL) c[i] = iniparse_get_int(ini, palette_setting);
+        ppu->set_palette( MAP_COLOR(c[0]), MAP_COLOR(c[1]), MAP_COLOR(c[2]), MAP_COLOR(c[3]));
+    }
+}
+
 int main(int argc, char * argv[]) {
     bool disable_audio = true;
 
@@ -103,18 +119,9 @@ int main(int argc, char * argv[]) {
     if(!fullscreen) fullscreen = iniparse_get_bool(ini, "GB:fullscreen") > 0;
 
     screen = SDL_CreateRGBSurface(0, 160, 144, 32, 0, 0, 0, 0);
-    uint32_t c0 = DEFAULT_COLOR0, c1 = DEFAULT_COLOR1, c2 = DEFAULT_COLOR2, c3 = DEFAULT_COLOR3;
-    if(iniparse_get_key(ini, "Palette:c0") != NULL) c0 = iniparse_get_int(ini, "Palette:c0");
-    if(iniparse_get_key(ini, "Palette:c1") != NULL) c1 = iniparse_get_int(ini, "Palette:c1");
-    if(iniparse_get_key(ini, "Palette:c2") != NULL) c2 = iniparse_get_int(ini, "Palette:c2");
-    if(iniparse_get_key(ini, "Palette:c3") != NULL) c3 = iniparse_get_int(ini, "Palette:c3");
-    PPU ppu(cart.status(),
-            (uint32_t *)screen->pixels,
-            MAP_COLOR(c0),
-            MAP_COLOR(c1),
-            MAP_COLOR(c2),
-            MAP_COLOR(c3)
-          );
+    PPU ppu(cart.status(), (uint32_t *)screen->pixels, 0, 0, 0, 0);
+
+    set_next_palette(&ppu, ini, screen);
 
     APU apu;
     Memory_map *memory;
@@ -192,6 +199,7 @@ int main(int argc, char * argv[]) {
                         case SDLK_BACKSPACE:bit_pos = 0x10 << 0x02; break;
                         case SDLK_RETURN:   bit_pos = 0x10 << 0x03; break;
 
+                        case SDLK_n:        if(evt.type == SDL_KEYUP) set_next_palette(&ppu, ini, screen); break;
                         case SDLK_ESCAPE:   quit = true;
                         default:            bit_pos = 0x00; break;
                     }
