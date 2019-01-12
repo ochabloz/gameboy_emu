@@ -267,8 +267,8 @@ void PPU::do_line(uint8_t line_num){
         }
         return;
     }
+    /* Tiles Rendering  (background)*/
     int32_t x = 0;
-
     for (int i = 0; i < 21; i++) { // 20 Tiles per line + 1 if there is an offset
         uint16_t tile_number = (((line_num+ SCY) / 8) & 0x1F) * 0x20 + ((SCX / 8 + i) & 0x1F);
 
@@ -295,7 +295,7 @@ void PPU::do_line(uint8_t line_num){
         x += 8;
     }
 
-
+    // Window Rendering
     x = 0;
     if (WIN_DISP_ENABLE() && line_num >= WY) {
 		for (int x_position = WX - 7; x_position < 168; x_position += 8) {

@@ -37,7 +37,7 @@ $(OBJ_DIR)%.o: $(SRC_DIR)%.c
 	$(CC) $(CFLAGS) $(CXXFLAGS) -c -o $@ $<
 
 # Additional compiled test program
-$(EXE): $(OBJ_FILES) $(OBJ_DIR)argparse.o  $(OBJ_DIR)utils.o
+$(EXE): $(OBJ_FILES) $(OBJ_DIR)argparse.o  $(OBJ_DIR)utils.o $(OBJ_DIR)iniparse.o
 	$(CPP) -o $@ $^ $(LDFLAGS)
 
 
